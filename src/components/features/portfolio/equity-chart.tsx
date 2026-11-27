@@ -1,278 +1,419 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { EquityPoint, DailyPnL } from '@/types/trading';
+import { useMemo, useState, useTransition } from 'react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar, ReferenceLine, Cell,
+  Area, AreaChart, Bar, BarChart, Brush, CartesianGrid, Cell, ComposedChart, Line, ReferenceDot,
+  ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis,
 } from 'recharts';
-import { cn } from '@/lib/utils/utils';
-import { formatCurrencyShort, formatCurrency } from '@/lib/utils/format-settings';
-import { TrendingUp, BarChart3, Calendar, TrendingDown } from 'lucide-react';
-import { startOfWeek, endOfWeek, startOfMonth, format, parseISO } from 'date-fns';
-import { PnLCalendar } from './pnl-calendar';
-import { useSettings } from '@/hooks/use-settings';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Activity, BarChart3, CalendarDays, Gauge, MousePointerClick, TrendingDown, TrendingUp } from 'lucide-react';
+import { format, parseISO, startOfMonth, startOfWeek, endOfMonth, endOfWeek } from 'date-fns';
+import type { DailyPnL } from '@/types/trading';
+import type { EnrichedDay } from '@/lib/analytics/core';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { CustomTabs, TabItem } from '@/components/ui/custom-tabs';
-import {
-  applyPnLViewMode, applyEquityViewMode, sanitizeEquityPoints,
-  type PnLViewMode, type EquityViewMode,
-} from './equity-chart-helpers';
+import { CustomTabs, type TabItem } from '@/components/ui/custom-tabs';
+import { cn } from '@/lib/utils/utils';
+import { applyPnLViewMode, type PnLViewMode, type EquityViewMode } from './equity-chart-helpers';
+import { PnLCalendar } from './pnl-calendar';
+import { MonthCalendar } from './month-calendar';
+import { useMoney } from '@/components/features/dashboard/format';
+import type { Range } from '@/lib/analytics/range';
+
+type ChartType = 'equity' | 'pnl' | 'drawdown' | 'rolling' | 'activity';
+type Aggregation = 'daily' | 'weekly' | 'monthly';
 
 interface EquityChartProps {
-  data: EquityPoint[];
-  allData?: DailyPnL[];
-  dateRange: { start: Date; end: Date };
-  onDateRangeChange: (range: { start: Date; end: Date }) => void;
+  /** Range-scoped enriched days */
+  days: EnrichedDay[];
+  /** All-time enriched days (calendar navigation) */
+  allDays: EnrichedDay[];
+  /** All raw entries (year heatmap) */
+  allEntries: DailyPnL[];
+  range?: Range;
   className?: string;
-  onCalendarDayClick?: (dayData: DailyPnL | null, date: Date) => void;
+  onDayClick: (key: string) => void;
+  onEmptyDayClick?: (key: string) => void;
+  onRangeDrill?: (from: Date, to: Date) => void;
 }
 
-/**
- * EquityTooltip — formats date as ISO 8601 (YYYY-MM-DD), equity/P&L to 2dp,
- * percentage to 2dp. Opens within 200ms on hover or keyboard focus.
- */
-function EquityTooltip({ active, payload, settings }: any) {
+interface Point {
+  key: string;
+  label: string;
+  from: Date;
+  to: Date;
+  pnl: number;
+  equity: number;
+  peak: number;
+  drawdownPct: number;
+  cumulative: number;
+  rWin: number;
+  rExp: number;
+  sessions: number;
+  isNewHigh: boolean;
+}
+
+const TABS: TabItem[] = [
+  { id: 'equity', label: 'Equity', icon: TrendingUp },
+  { id: 'pnl', label: 'P&L', icon: BarChart3 },
+  { id: 'drawdown', label: 'Drawdown', icon: TrendingDown },
+  { id: 'rolling', label: 'Rolling', icon: Gauge },
+  { id: 'activity', label: 'Calendar', icon: CalendarDays },
+];
+
+const TITLES: Record<ChartType, { title: string; sub: string }> = {
+  equity: { title: 'Equity curve', sub: 'Account value after each session' },
+  pnl: { title: 'Session P&L', sub: 'Green and red sessions over time' },
+  drawdown: { title: 'Underwater', sub: 'Distance below the running equity peak' },
+  rolling: { title: 'Rolling form', sub: '20-session win rate and average P&L' },
+  activity: { title: 'Calendar', sub: 'Every session, day by day' },
+};
+
+function aggregate(days: EnrichedDay[], mode: Aggregation): Point[] {
+  if (mode === 'daily') {
+    return days.map((d) => ({
+      key: d.key, label: format(d.date, 'MMM d'), from: d.date, to: d.date, pnl: d.pnl, equity: d.equity, peak: d.peak,
+      drawdownPct: d.drawdownPct, cumulative: d.cumulative, rWin: d.rollingWinRate, rExp: d.rollingExpectancy, sessions: 1, isNewHigh: d.isNewHigh,
+    }));
+  }
+  const map = new Map<string, Point>();
+  for (const d of days) {
+    const start = mode === 'weekly' ? startOfWeek(d.date, { weekStartsOn: 1 }) : startOfMonth(d.date);
+    const key = format(start, 'yyyy-MM-dd');
+    const p = map.get(key);
+    if (!p) {
+      map.set(key, {
+        key,
+        label: mode === 'weekly' ? `Wk ${format(start, 'MMM d')}` : format(start, "MMM ''yy"),
+        from: start,
+        to: mode === 'weekly' ? endOfWeek(start, { weekStartsOn: 1 }) : endOfMonth(start),
+        pnl: d.pnl, equity: d.equity, peak: d.peak, drawdownPct: d.drawdownPct, cumulative: d.cumulative,
+        rWin: d.rollingWinRate, rExp: d.rollingExpectancy, sessions: 1, isNewHigh: d.isNewHigh,
+      });
+    } else {
+      p.pnl += d.pnl;
+      p.equity = d.equity;
+      p.peak = d.peak;
+      p.drawdownPct = Math.min(p.drawdownPct, d.drawdownPct);
+      p.cumulative = d.cumulative;
+      p.rWin = d.rollingWinRate;
+      p.rExp = d.rollingExpectancy;
+      p.sessions++;
+      p.isNewHigh = p.isNewHigh || d.isNewHigh;
+    }
+  }
+  return Array.from(map.values());
+}
+
+function RichTooltip({ active, payload, mode, money, aggregation, rUnit, equityMode }: any) {
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
-
-  // Date is already stored as ISO 8601 (YYYY-MM-DD) in EquityPoint.date
-  const isoDate = d.date;
-  const equityFormatted = typeof d.equity === 'number' ? d.equity.toFixed(2) : '—';
-  const pnlFormatted = typeof d.pnl === 'number' ? d.pnl.toFixed(2) : '—';
-  const pctFormatted = typeof d.pnlPercentage === 'number' ? d.pnlPercentage.toFixed(2) : '—';
-
+  const p: Point = payload[0].payload;
+  const dateLabel = aggregation === 'daily'
+    ? format(p.from, 'EEE, MMM d, yyyy')
+    : aggregation === 'weekly' ? `Week of ${format(p.from, 'MMM d, yyyy')}` : format(p.from, 'MMMM yyyy');
   return (
-    <div
-      className="bg-popover border border-border rounded-lg p-3 shadow-xl text-sm"
-      role="tooltip"
-    >
-      <p className="text-muted-foreground text-xs mb-2">{isoDate}</p>
-      <p className="font-semibold">
-        Equity: {equityFormatted}
-      </p>
-      <p className={d.pnl >= 0 ? 'text-positive' : 'text-negative'}>
-        P&L: {d.pnl >= 0 ? '+' : ''}{pnlFormatted}
-      </p>
-      <p className="text-muted-foreground text-xs">
-        {d.pnlPercentage >= 0 ? '+' : ''}{pctFormatted}%
+    <div className="min-w-[190px] chart-tooltip" role="tooltip">
+      <p className="mb-2 font-medium text-muted-foreground">{dateLabel}{aggregation !== 'daily' && ` · ${p.sessions} sessions`}</p>
+      <div className="space-y-1">
+        <Row label={aggregation === 'daily' ? 'Session P&L' : 'Period P&L'} value={money.signedFull(p.pnl)} tone={p.pnl} />
+        {mode === 'equity' && equityMode === 'r-multiple' && <Row label="Cumulative" value={`${(p.cumulative / rUnit).toFixed(2)}R`} tone={p.cumulative} />}
+        <Row label="Equity" value={money.full(p.equity)} />
+        <Row label="Drawdown" value={`${p.drawdownPct.toFixed(2)}%`} tone={p.drawdownPct < 0 ? -1 : 0} />
+        {mode === 'rolling' && (
+          <>
+            <Row label="Win rate (20)" value={`${p.rWin.toFixed(0)}%`} />
+            <Row label="Avg P&L (20)" value={money.signed(p.rExp)} tone={p.rExp} />
+          </>
+        )}
+      </div>
+      <p className="mt-2 flex items-center gap-1 border-t border-border pt-2 text-[10px] text-muted-foreground">
+        <MousePointerClick className="h-3 w-3" /> Click to {aggregation === 'daily' ? 'analyze session' : 'zoom in'}
       </p>
     </div>
   );
 }
 
-export function EquityChart({
-  data, allData, dateRange, onDateRangeChange, className, onCalendarDayClick,
-}: EquityChartProps) {
-  const [chartType, setChartType] = useLocalStorage<'equity' | 'pnl' | 'activity'>('equity-chart-type', 'equity');
-  const [equityViewMode, setEquityViewMode] = useLocalStorage<EquityViewMode>('equity-view-mode', 'absolute');
-  const [pnlViewMode, setPnlViewMode] = useLocalStorage<PnLViewMode>('pnl-view-mode', 'raw');
-  const [showDrawdown, setShowDrawdown] = useLocalStorage<boolean>('equity-show-drawdown', true);
-  const [aggregation, setAggregation] = useLocalStorage<'daily' | 'weekly' | 'monthly'>('equity-aggregation-period', 'daily');
-  const { settings } = useSettings();
-
-  // Sanitize input — never throws (req 5.7, 5.8)
-  const safeData = useMemo(() => sanitizeEquityPoints(data), [data]);
-
-  // Aggregate data
-  const aggregatedData = useMemo(() => {
-    if (aggregation === 'daily') return safeData;
-    const groups = new Map<string, EquityPoint[]>();
-    safeData.forEach((point) => {
-      const d = parseISO(point.date);
-      const key = aggregation === 'weekly'
-        ? format(startOfWeek(d, { weekStartsOn: 1 }), 'yyyy-MM-dd')
-        : format(startOfMonth(d), 'yyyy-MM-dd');
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(point);
-    });
-    const result: EquityPoint[] = [];
-    groups.forEach((points, key) => {
-      const last = points[points.length - 1];
-      const totalPnl = points.reduce((s, p) => s + p.pnl, 0);
-      const pct = points[0].equity > 0 ? (totalPnl / (points[0].equity - points[0].pnl)) * 100 : 0;
-      result.push({ date: key, displayDate: last.displayDate, equity: last.equity, pnl: totalPnl, pnlPercentage: parseFloat(pct.toFixed(2)) });
-    });
-    return result.sort((a, b) => a.date.localeCompare(b.date));
-  }, [safeData, aggregation]);
-
-  // Apply view-mode transformations via pure helpers
-  const equityData = useMemo(() => applyEquityViewMode(aggregatedData, equityViewMode), [aggregatedData, equityViewMode]);
-  const pnlData = useMemo(() => applyPnLViewMode(aggregatedData, pnlViewMode), [aggregatedData, pnlViewMode]);
-
-  // Drawdown overlay data (peak tracking)
-  const dataWithDrawdown = useMemo(() => {
-    return equityData.reduce<Array<typeof equityData[0] & { peak: number }>>((acc, p) => {
-      const prevPeak = acc.length > 0 ? acc[acc.length - 1].peak : 0;
-      const peak = Math.max(prevPeak, p.equity);
-      acc.push({ ...p, peak });
-      return acc;
-    }, []);
-  }, [equityData]);
-
-  const tabItems: TabItem[] = [
-    { id: 'equity', label: 'Equity', icon: TrendingUp },
-    { id: 'pnl', label: 'P&L', icon: BarChart3 },
-    { id: 'activity', label: 'Calendar', icon: Calendar },
-  ];
-
-  const tickFormatter = (v: number) => formatCurrencyShort(v, settings);
-
-  // Toggle drawdown without remounting the AreaChart (req 5.2)
-  const handleDrawdownToggle = useCallback(() => {
-    setShowDrawdown(!showDrawdown);
-  }, [showDrawdown, setShowDrawdown]);
-
-  // Empty state (req 5.7)
-  if (safeData.length === 0) {
-    return (
-      <Card className={cn('lg:col-span-2 border-border bg-card rounded-2xl', className)}>
-        <CardContent className="flex items-center justify-center h-[220px]">
-          <p className="text-muted-foreground text-sm">No equity data available</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+function Row({ label, value, tone }: { label: string; value: string; tone?: number }) {
   return (
-    <Card className={cn('lg:col-span-2 border-border bg-card rounded-2xl min-w-0 overflow-hidden', className)}>
-      <CardHeader className="flex flex-col gap-2 pb-2 p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <CardTitle className="text-xl font-bold">
-            {chartType === 'equity' ? 'Equity Curve' : chartType === 'pnl' ? 'Daily P&L' : 'Activity Heatmap'}
-          </CardTitle>
-          <CustomTabs items={tabItems} value={chartType} onValueChange={(v) => setChartType(v as any)} />
-        </div>
-
-        {(chartType === 'equity' || chartType === 'pnl') && (
-          <div className="flex flex-wrap gap-2 items-center" role="toolbar" aria-label="Chart view controls">
-            {chartType === 'equity' && (
-              <>
-                <ToggleButton
-                  active={equityViewMode === 'absolute'}
-                  onClick={() => setEquityViewMode('absolute')}
-                  label="Absolute"
-                />
-                <ToggleButton
-                  active={equityViewMode === 'r-multiple'}
-                  onClick={() => setEquityViewMode('r-multiple')}
-                  label="R-Multiple"
-                />
-                <ToggleButton
-                  active={showDrawdown}
-                  onClick={handleDrawdownToggle}
-                  label="Drawdown"
-                  icon={<TrendingDown className="h-3 w-3" />}
-                />
-              </>
-            )}
-            {chartType === 'pnl' && (
-              <>
-                <ToggleButton active={pnlViewMode === 'raw'} onClick={() => setPnlViewMode('raw')} label="Raw" />
-                <ToggleButton active={pnlViewMode === 'clipped'} onClick={() => setPnlViewMode('clipped')} label="Clipped" />
-                <ToggleButton active={pnlViewMode === 'log'} onClick={() => setPnlViewMode('log')} label="Log" />
-              </>
-            )}
-          </div>
-        )}
-      </CardHeader>
-
-      <CardContent className="px-1 sm:px-4 pb-2">
-        <div className="h-[200px] sm:h-[260px] lg:h-[320px] w-full">
-          {chartType === 'activity' ? (
-            <PnLCalendar
-              data={allData || safeData.map((d) => ({ id: '', date: new Date(d.date), pnl: d.pnl }))}
-              className="no-card border-0 shadow-none h-full w-full"
-              onDayClick={onCalendarDayClick}
-              showWeeklySummary
-            />
-          ) : chartType === 'equity' ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dataWithDrawdown} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                {/* eslint-disable no-restricted-syntax -- chart series styling */}
-                <defs>
-                  <linearGradient id="eqFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.01} />
-                  </linearGradient>
-                  <linearGradient id="ddFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.1} vertical={false} />
-                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} dy={10} minTickGap={30} /> {/* eslint-disable-line no-restricted-syntax -- chart axis styling */}
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={tickFormatter} /> {/* eslint-disable-line no-restricted-syntax -- chart axis styling */}
-                <RechartsTooltip
-                  content={<EquityTooltip settings={settings} />}
-                  animationDuration={200}
-                />
-                {/* Drawdown overlay: mounts/unmounts only this <Area> node (req 5.2) */}
-                {showDrawdown && (
-                  <Area type="monotone" dataKey="peak" stroke="transparent" fillOpacity={1} fill="url(#ddFill)" isAnimationActive={false} />
-                )}
-                <Area type="monotone" dataKey="equity" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#eqFill)" isAnimationActive={false} /> {/* eslint-disable-line no-restricted-syntax -- chart series styling */}
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={pnlData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                {/* eslint-disable no-restricted-syntax -- chart series styling */}
-                <defs>
-                  <linearGradient id="profitG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#22c55e" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#15803d" stopOpacity={1} />
-                  </linearGradient>
-                  <linearGradient id="lossG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#b91c1c" stopOpacity={1} />
-                  </linearGradient>
-                </defs>
-                {/* eslint-enable no-restricted-syntax */}
-                <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.1} vertical={false} />
-                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} dy={10} minTickGap={30} /> {/* eslint-disable-line no-restricted-syntax -- chart axis styling */}
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={tickFormatter} /> {/* eslint-disable-line no-restricted-syntax -- chart axis styling */}
-                <RechartsTooltip
-                  content={<EquityTooltip settings={settings} />}
-                  animationDuration={200}
-                />
-                <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.3} />
-                <Bar dataKey="pnl" radius={[4, 4, 4, 4]} maxBarSize={50} isAnimationActive={false}>
-                  {pnlData.map((entry, i) => (
-                    <Cell key={i} fill={entry.pnl >= 0 ? 'url(#profitG)' : 'url(#lossG)'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn('font-semibold tabular-nums', tone === undefined ? '' : tone > 0 ? 'text-positive' : tone < 0 ? 'text-negative' : '')}>{value}</span>
+    </div>
   );
 }
 
-/**
- * Toggle button using the shared Button `toggle` variant.
- * Exposes `aria-pressed`, visible focus rings, reachable via Tab,
- * operable via Enter/Space (native button behavior).
- */
-function ToggleButton({ active, onClick, label, icon }: { active: boolean; onClick: () => void; label: string; icon?: React.ReactNode }) {
+const axisTick = { fill: 'hsl(var(--muted-foreground))', fontSize: 11 }; // eslint-disable-line no-restricted-syntax -- chart axis styling
+
+export function EquityChart({ days, allDays, allEntries, range, className, onDayClick, onEmptyDayClick, onRangeDrill }: EquityChartProps) {
+  const money = useMoney();
+  const reduce = useReducedMotion();
+  const [chartType, setChartType] = useLocalStorage<ChartType>('equity-chart-type', 'equity');
+  const [equityViewMode, setEquityViewMode] = useLocalStorage<EquityViewMode>('equity-view-mode', 'absolute');
+  const [pnlViewMode, setPnlViewMode] = useLocalStorage<PnLViewMode>('pnl-view-mode', 'raw');
+  const [showDrawdown, setShowDrawdown] = useLocalStorage<boolean>('equity-show-drawdown', true);
+  const [aggregation, setAggregation] = useLocalStorage<Aggregation>('equity-aggregation-period', 'daily');
+  const [calendarMode, setCalendarMode] = useLocalStorage<'month' | 'year'>('calendar-mode', 'month');
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
+  // Controls flip instantly; the (heavier) chart re-render follows as a transition
+  const [isPending, startTransition] = useTransition();
+  const later = <T,>(fn: (v: T) => void) => (v: T) => startTransition(() => fn(v));
+
+  const type: ChartType = (TABS.some((t) => t.id === chartType) ? chartType : 'equity') as ChartType;
+  const points = useMemo(() => aggregate(days, aggregation), [days, aggregation]);
+
+  // 1R = average losing session (falls back to 1% of starting equity)
+  const rUnit = useMemo(() => {
+    const losses = days.filter((d) => d.pnl < 0);
+    if (losses.length) return Math.abs(losses.reduce((s, d) => s + d.pnl, 0) / losses.length);
+    return Math.max(1, Math.abs(days[0]?.equityBefore ?? 100) * 0.01);
+  }, [days]);
+
+  const equityPoints = useMemo(
+    () => points.map((p) => ({ ...p, y: equityViewMode === 'r-multiple' ? p.cumulative / rUnit : p.equity, yPeak: equityViewMode === 'r-multiple' ? null : p.peak })),
+    [points, equityViewMode, rUnit],
+  );
+
+  // P&L view modes reuse the tested helpers (raw / clipped / log)
+  const pnlPoints = useMemo(() => {
+    const transformed = applyPnLViewMode(points.map((p) => ({ date: p.key, equity: p.equity, pnl: p.pnl, pnlPercentage: 0 })), pnlViewMode);
+    return points.map((p, i) => ({ ...p, display: transformed[i].pnl }));
+  }, [points, pnlViewMode]);
+
+  const peakPoint = useMemo(() => equityPoints.reduce<typeof equityPoints[number] | null>((best, p) => (!best || p.y > best.y ? p : best), null), [equityPoints]);
+  const troughPoint = useMemo(() => points.reduce<Point | null>((w, p) => (!w || p.drawdownPct < w.drawdownPct ? p : w), null), [points]);
+
+  const handleClick = (state: any) => {
+    const idx = typeof state?.activeIndex === 'number' ? state.activeIndex : Number(state?.activeIndex);
+    const p = Number.isFinite(idx) ? points[idx] : undefined;
+    if (!p) return;
+    if (aggregation === 'daily') onDayClick(p.key);
+    else onRangeDrill?.(p.from, p.to);
+  };
+
+  const showBrush = points.length > 45;
+  const brush = showBrush ? (
+    <Brush
+      dataKey="label"
+      height={22}
+      travellerWidth={8}
+      stroke="hsl(var(--brand))"
+      fill="hsl(var(--card))"
+      tickFormatter={() => ''}
+      startIndex={Math.max(0, points.length - 120)}
+    />
+  ) : null;
+
+  const tickFmt = (v: number) => (equityViewMode === 'r-multiple' && type === 'equity' ? `${v.toFixed(0)}R` : money.short(v));
+  const tooltip = <RechartsTooltip content={<RichTooltip mode={type} money={money} aggregation={aggregation} rUnit={rUnit} equityMode={equityViewMode} />} cursor={{ stroke: 'hsl(var(--brand))', strokeOpacity: 0.35, strokeDasharray: '3 3' }} />;
+  const anim = { isAnimationActive: !reduce, animationDuration: 420, animationEasing: 'ease-out' as const };
+  const empty = days.length === 0;
+
   return (
-    <Button
-      variant="toggle"
-      size="sm"
+    <div className={cn('surface min-w-0 overflow-hidden', className)}>
+      <div className="flex flex-col gap-3 p-4 pb-2 sm:p-5 sm:pb-2">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-base font-semibold tracking-tight">{TITLES[type].title}</h3>
+            <p className="text-xs text-muted-foreground">{TITLES[type].sub}</p>
+          </div>
+          <CustomTabs items={TABS} value={type} onValueChange={later((v: string) => setChartType(v as ChartType))} size="sm" compact className="max-w-full overflow-x-auto" />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Chart view controls">
+          {type !== 'activity' && (
+            <CustomTabs
+              size="sm"
+              items={[{ id: 'daily', label: 'Daily' }, { id: 'weekly', label: 'Weekly' }, { id: 'monthly', label: 'Monthly' }]}
+              value={aggregation}
+              onValueChange={later((v: string) => setAggregation(v as Aggregation))}
+            />
+          )}
+          {type === 'equity' && (
+            <>
+              <CustomTabs size="sm" items={[{ id: 'absolute', label: 'Absolute' }, { id: 'r-multiple', label: 'R-Multiple' }]} value={equityViewMode} onValueChange={later((v: string) => setEquityViewMode(v as EquityViewMode))} />
+              <Toggle active={showDrawdown} onClick={() => setShowDrawdown(!showDrawdown)} label="Drawdown" icon={<TrendingDown className="h-3 w-3" />} />
+            </>
+          )}
+          {type === 'pnl' && (
+            <CustomTabs size="sm" items={[{ id: 'raw', label: 'Raw' }, { id: 'clipped', label: 'Clipped' }, { id: 'log', label: 'Log' }]} value={pnlViewMode} onValueChange={later((v: string) => setPnlViewMode(v as PnLViewMode))} />
+          )}
+          {type === 'activity' && (
+            <CustomTabs size="sm" items={[{ id: 'month', label: 'Month' }, { id: 'year', label: '12 months' }]} value={calendarMode} onValueChange={later((v: string) => setCalendarMode(v as 'month' | 'year'))} />
+          )}
+          {type === 'equity' && equityViewMode === 'r-multiple' && (
+            <span className="text-[11px] text-muted-foreground">1R = avg losing session ({money.short(rUnit)})</span>
+          )}
+        </div>
+      </div>
+
+      <div className={cn('px-1 pb-3 transition-opacity duration-fast sm:px-3', isPending && 'opacity-60')}>
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={`${type}-${type === 'activity' ? calendarMode : aggregation}`}
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.16 }}
+            className={cn('w-full', type === 'activity' ? 'min-h-[320px] px-2 sm:px-1' : 'h-[260px] sm:h-[320px] lg:h-[360px]')}
+          >
+            {empty && type !== 'activity' ? (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No sessions in this range</div>
+            ) : type === 'activity' ? (
+              calendarMode === 'month' ? (
+                <MonthCalendar
+                  days={allDays}
+                  initialMonth={range?.to}
+                  onDayClick={(key, has) => (has ? onDayClick(key) : onEmptyDayClick?.(key))}
+                  onMonthDrill={onRangeDrill}
+                />
+              ) : (
+                <PnLCalendar
+                  data={allEntries}
+                  className="no-card"
+                  dateRange={range}
+                  onDayClick={(entry, date) => {
+                    const key = format(date, 'yyyy-MM-dd');
+                    if (entry) onDayClick(key);
+                    else onEmptyDayClick?.(key);
+                  }}
+                />
+              )
+            ) : type === 'equity' ? (
+              <div className="flex h-full flex-col">
+                <div className={cn('min-h-0', showDrawdown && equityViewMode === 'absolute' ? 'flex-[3]' : 'flex-1')}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={equityPoints} margin={{ top: 22, right: 12, left: 0, bottom: 0 }} onClick={handleClick} syncId="studio" style={{ cursor: 'pointer' }}>
+                      <defs>
+                        <linearGradient id="eqFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--brand))" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="hsl(var(--brand))" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="eqStroke" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="hsl(var(--brand-2))" />
+                          <stop offset="100%" stopColor="hsl(var(--brand))" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid stroke="hsl(var(--grid))" strokeOpacity={0.6} vertical={false} />
+                      <XAxis dataKey="label" axisLine={false} tickLine={false} tick={axisTick} minTickGap={36} dy={6} />
+                      <YAxis axisLine={false} tickLine={false} tick={axisTick} tickFormatter={tickFmt} width={64} domain={['auto', 'auto']} />
+                      {tooltip}
+                      {equityViewMode === 'r-multiple' && <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.4} />}
+                      {showDrawdown && equityViewMode === 'absolute' && (
+                        <Line type="stepAfter" dataKey="yPeak" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} strokeDasharray="4 4" dot={false} strokeWidth={1} {...anim} />
+                      )}
+                      <Area type="monotone" dataKey="y" stroke="url(#eqStroke)" strokeWidth={2.5} fill="url(#eqFill)" activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--card))', fill: 'hsl(var(--brand))' }} {...anim} />
+                      {peakPoint && equityPoints.length > 2 && (
+                        <ReferenceDot x={peakPoint.label} y={peakPoint.y} r={4} fill="hsl(var(--positive))" stroke="hsl(var(--card))" strokeWidth={2} label={{ value: 'Peak', position: 'top', fill: 'hsl(var(--positive))', fontSize: 10 }} /> // eslint-disable-line no-restricted-syntax -- chart label styling
+                      )}
+                      {brush}
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+                {showDrawdown && equityViewMode === 'absolute' && (
+                  <div className="min-h-0 flex-1 border-t border-border/60 pt-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={equityPoints} margin={{ top: 4, right: 12, left: 0, bottom: 0 }} syncId="studio" onClick={handleClick}>
+                        <defs>
+                          <linearGradient id="ddFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(var(--negative))" stopOpacity={0.05} />
+                            <stop offset="100%" stopColor="hsl(var(--negative))" stopOpacity={0.4} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="label" hide />
+                        <YAxis axisLine={false} tickLine={false} tick={axisTick} tickFormatter={(v) => `${Number(v).toFixed(0)}%`} width={64} domain={['dataMin', 0]} />
+                        <RechartsTooltip content={() => null} cursor={{ stroke: 'hsl(var(--brand))', strokeOpacity: 0.35, strokeDasharray: '3 3' }} />
+                        <Area type="monotone" dataKey="drawdownPct" stroke="hsl(var(--negative))" strokeWidth={1.25} fill="url(#ddFill)" baseValue={0} {...anim} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            ) : type === 'pnl' ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={pnlPoints} margin={{ top: 10, right: 12, left: 0, bottom: 0 }} onClick={handleClick} onMouseMove={(s: any) => setHoverKey(typeof s?.activeIndex === 'number' ? pnlPoints[s.activeIndex]?.key ?? null : null)} onMouseLeave={() => setHoverKey(null)} style={{ cursor: 'pointer' }}>
+                  <CartesianGrid stroke="hsl(var(--grid))" strokeOpacity={0.6} vertical={false} />
+                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={axisTick} minTickGap={36} dy={6} />
+                  <YAxis axisLine={false} tickLine={false} tick={axisTick} tickFormatter={(v) => (pnlViewMode === 'log' ? Number(v).toFixed(1) : money.short(v))} width={64} />
+                  {tooltip}
+                  <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.4} />
+                  <Bar dataKey="display" radius={[3, 3, 3, 3]} maxBarSize={28} {...anim}>
+                    {pnlPoints.map((p) => (
+                      <Cell key={p.key} fill={p.pnl >= 0 ? 'hsl(var(--positive))' : 'hsl(var(--negative))'} fillOpacity={hoverKey && hoverKey !== p.key ? 0.45 : 0.9} />
+                    ))}
+                  </Bar>
+                  {brush}
+                </BarChart>
+              </ResponsiveContainer>
+            ) : type === 'drawdown' ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={points} margin={{ top: 16, right: 12, left: 0, bottom: 0 }} onClick={handleClick} style={{ cursor: 'pointer' }}>
+                  <defs>
+                    <linearGradient id="uwFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--negative))" stopOpacity={0.05} />
+                      <stop offset="100%" stopColor="hsl(var(--negative))" stopOpacity={0.45} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="hsl(var(--grid))" strokeOpacity={0.6} vertical={false} />
+                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={axisTick} minTickGap={36} dy={6} />
+                  <YAxis axisLine={false} tickLine={false} tick={axisTick} tickFormatter={(v) => `${Number(v).toFixed(0)}%`} width={56} domain={['dataMin', 0]} />
+                  {tooltip}
+                  <ReferenceLine y={-10} stroke="hsl(var(--warning))" strokeDasharray="4 4" strokeOpacity={0.6} label={{ value: '-10%', position: 'insideBottomLeft', fill: 'hsl(var(--warning))', fontSize: 10 }} /> {/* eslint-disable-line no-restricted-syntax -- chart label styling */}
+                  <Area type="monotone" dataKey="drawdownPct" stroke="hsl(var(--negative))" strokeWidth={2} fill="url(#uwFill)" baseValue={0} {...anim} />
+                  {troughPoint && troughPoint.drawdownPct < 0 && (
+                    <ReferenceDot x={troughPoint.label} y={troughPoint.drawdownPct} r={4} fill="hsl(var(--negative))" stroke="hsl(var(--card))" strokeWidth={2} label={{ value: `${troughPoint.drawdownPct.toFixed(1)}%`, position: 'bottom', fill: 'hsl(var(--negative))', fontSize: 10 }} /> // eslint-disable-line no-restricted-syntax -- chart label styling
+                  )}
+                  {brush}
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={points} margin={{ top: 10, right: 4, left: 0, bottom: 0 }} onClick={handleClick} style={{ cursor: 'pointer' }}>
+                  <CartesianGrid stroke="hsl(var(--grid))" strokeOpacity={0.6} vertical={false} />
+                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={axisTick} minTickGap={36} dy={6} />
+                  <YAxis yAxisId="wr" axisLine={false} tickLine={false} tick={axisTick} domain={[0, 100]} tickFormatter={(v) => `${v}%`} width={44} />
+                  <YAxis yAxisId="exp" orientation="right" axisLine={false} tickLine={false} tick={axisTick} tickFormatter={(v) => money.short(v)} width={60} />
+                  {tooltip}
+                  <ReferenceLine yAxisId="wr" y={50} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" strokeOpacity={0.5} />
+                  <ReferenceLine yAxisId="exp" y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.3} />
+                  <Bar yAxisId="exp" dataKey="rExp" maxBarSize={10} radius={[2, 2, 2, 2]} {...anim}>
+                    {points.map((p) => <Cell key={p.key} fill={p.rExp >= 0 ? 'hsl(var(--positive))' : 'hsl(var(--negative))'} fillOpacity={0.35} />)}
+                  </Bar>
+                  <Line yAxisId="wr" type="monotone" dataKey="rWin" stroke="hsl(var(--brand))" strokeWidth={2.25} dot={false} {...anim} />
+                  {brush}
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {type === 'rolling' && !empty && (
+          <div className="flex items-center gap-4 px-3 pt-1 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 rounded bg-brand" /> Win rate (20)</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-positive/40" /> Avg P&L (20)</span>
+          </div>
+        )}
+        {type !== 'activity' && !empty && (
+          <p className="flex items-center gap-1 px-3 pt-1 text-[10px] text-muted-foreground/80">
+            <Activity className="h-3 w-3" /> {aggregation === 'daily' ? 'Click any point to drill into that session' : 'Click a period to zoom the whole dashboard into it'}
+            {showBrush && ' · drag the handles below to zoom'}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Toggle({ active, onClick, label, icon }: { active: boolean; onClick: () => void; label: string; icon?: React.ReactNode }) {
+  return (
+    <button
+      type="button"
       aria-pressed={active}
-      data-pressed={active}
       onClick={onClick}
       className={cn(
-        'h-7 px-2.5 text-xs font-medium transition-colors duration-200 motion-reduce:duration-0',
+        'inline-flex h-[30px] items-center gap-1.5 rounded-xl border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        active ? 'border-negative/40 bg-negative/10 text-negative' : 'border-border bg-card text-muted-foreground hover:text-foreground',
       )}
     >
       {icon}
       {label}
-    </Button>
+    </button>
   );
 }

@@ -136,7 +136,7 @@ export function FundHistory({ onFundUpdate, dateRange }: FundHistoryProps = {}) 
 
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <Card className="col-span-1 shadow-sm">
+      <Card className="col-span-1 shadow-elev-1">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export function FundHistory({ onFundUpdate, dateRange }: FundHistoryProps = {}) 
                 trigger={
                   <Button
                     variant="outline"
-                    className="h-9 bg-white/80 dark:bg-slate-900/60 border-gray-200 dark:border-slate-800 text-blue-600 dark:text-blue-300 px-3 rounded-lg shadow-none hover:bg-gray-100/80 dark:hover:bg-slate-800/80"
+                    className="h-9 bg-card border-border text-primary px-3 rounded-lg shadow-none hover:bg-accent"
                   >
                     <Plus className="w-4 h-4" />
                     <span className="hidden md:inline font-medium text-sm ml-2">Add Funds</span>
@@ -157,7 +157,7 @@ export function FundHistory({ onFundUpdate, dateRange }: FundHistoryProps = {}) 
                 }
               />
               <DialogTrigger asChild>
-                <Button variant="ghost" className="text-sm text-blue-500 hover:text-blue-600">
+                <Button variant="ghost" className="text-sm text-primary hover:text-primary">
                   Show All
                 </Button>
               </DialogTrigger>
@@ -167,7 +167,7 @@ export function FundHistory({ onFundUpdate, dateRange }: FundHistoryProps = {}) 
         <CardContent>
           <div className="space-y-3">
             {/* Summary */}
-            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-gray-200 dark:border-gray-800">
+            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-border">
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Total Deposits</p>
                 <p className="text-sm font-semibold text-positive">+{formatINR(totalDeposits)}</p>

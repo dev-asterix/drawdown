@@ -17,9 +17,7 @@ export function FormattedCurrency({
 }) {
   const { settings } = useSettings();
 
-  if (!settings)
-    return <span>{short ? '₹0' : '₹0.00'}</span>;
-
+  // Formatters fall back to sensible defaults while settings are loading.
   return (
     <span>
       {short ? formatCurrencyShort(value, settings) : formatCurrency(value, settings, { decimals })}

@@ -142,7 +142,7 @@ export function AccountDetailsCard() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         </CardContent>
       </Card>
@@ -184,15 +184,15 @@ export function AccountDetailsCard() {
             <div className="flex items-center gap-3">
               {getProviderIcon(accountInfo.provider)}
               <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                <p className="text-sm font-semibold text-foreground">
                   {accountInfo.name || 'User'}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {accountInfo.email}
                 </p>
               </div>
             </div>
-            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+            <Badge className="bg-primary/10 text-primary">
               {getProviderLabel(accountInfo.provider)}
             </Badge>
           </div>
@@ -200,25 +200,25 @@ export function AccountDetailsCard() {
 
         {/* Cloud Files */}
         {accountInfo.files && (
-          <div className="border-t border-gray-200 dark:border-slate-800 pt-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
               {getStorageIcon(accountInfo.provider)}
               {getStorageLabel(accountInfo.provider)} Files
             </h3>
             <div className="space-y-3">
               {/* Settings File */}
               {accountInfo.files.settings && (
-                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
-                  <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                  <FileText className="h-5 w-5 text-warning mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {accountInfo.files.settings.name}
                     </p>
                     <div className="flex flex-col gap-1 mt-1">
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         Size: {formatFileSize(accountInfo.files.settings.size)}
                       </p>
-                      <div className="flex gap-4 text-xs text-gray-600 dark:text-gray-400">
+                      <div className="flex gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
                           <span>Created: {formatDate(accountInfo.files.settings.createdTime)}</span>
@@ -235,17 +235,17 @@ export function AccountDetailsCard() {
 
               {/* Portfolio File */}
               {accountInfo.files.portfolio && (
-                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                   <FileText className="h-5 w-5 text-positive mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {accountInfo.files.portfolio.name}
                     </p>
                     <div className="flex flex-col gap-1 mt-1">
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         Size: {formatFileSize(accountInfo.files.portfolio.size)}
                       </p>
-                      <div className="flex gap-4 text-xs text-gray-600 dark:text-gray-400">
+                      <div className="flex gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
                           <span>Created: {formatDate(accountInfo.files.portfolio.createdTime)}</span>
@@ -261,7 +261,7 @@ export function AccountDetailsCard() {
               )}
 
               {!accountInfo.files.settings && !accountInfo.files.portfolio && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 py-4">
+                <p className="text-sm text-muted-foreground py-4">
                   No cloud files found yet. They will be created when you save data.
                 </p>
               )}

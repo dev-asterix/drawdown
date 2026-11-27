@@ -18,8 +18,8 @@ export function RateLimitBanner({ state, softLimit, onAcknowledge }: RateLimitBa
   if (!state.softLimitHit && !inCooldown) return null;
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs">
-      <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+    <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/100/10 px-3 py-2 text-xs">
+      <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
       <div className="flex-1">
         {inCooldown && (
           <p>Rate limited. Retry in {cooldownRemaining}s.</p>

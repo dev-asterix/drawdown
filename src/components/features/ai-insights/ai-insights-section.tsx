@@ -28,8 +28,14 @@ export function AIInsightsSection({ buildSnapshot }: AIInsightsSectionProps) {
     return (
       <Card className="border-border bg-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4" /> AI Insights
+          <CardTitle className="flex items-center gap-2.5 text-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-2 text-primary-foreground shadow-sm">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span>
+              AI Analyst
+              <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">Bring your own key · redacted data only</span>
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -48,8 +54,14 @@ export function AIInsightsSection({ buildSnapshot }: AIInsightsSectionProps) {
     <Card className="border-border bg-card">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4" /> AI Insights
+          <CardTitle className="flex items-center gap-2.5 text-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-2 text-primary-foreground shadow-sm">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span>
+              AI Analyst
+              <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">Bring your own key · redacted data only</span>
+            </span>
           </CardTitle>
           <span className="text-xs text-muted-foreground">{rateLimitState.todayCount} requests today</span>
         </div>
@@ -64,7 +76,7 @@ export function AIInsightsSection({ buildSnapshot }: AIInsightsSectionProps) {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-2">
           {INSIGHT_TYPES.map((type) => (
             <GenerateButton
               key={type}

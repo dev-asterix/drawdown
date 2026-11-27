@@ -72,24 +72,20 @@ export function AnimatedBackground() {
     }
 
     return (
-        <div className="fixed inset-0 -z-10 overflow-hidden bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50/30 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors duration-1000">
-            {/* Soft Gradient Orbs */}
-            <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-200/20 dark:bg-blue-500/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob" />
-            <div className="absolute top-0 right-4 w-96 h-96 bg-purple-200/20 dark:bg-purple-500/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-2000" />
-            <div className="absolute -bottom-8 left-20 w-96 h-96 bg-emerald-200/20 dark:bg-emerald-500/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-4000" />
-
-            {/* Subtle Grid Pattern */}
+        <div className="app-backdrop fixed inset-0 -z-10 overflow-hidden">
+            {/* Static colour washes (no animated blur: cheap to paint) */}
             <div
-                className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]"
+                className="absolute inset-0"
                 style={{
-                    backgroundImage: `linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)`,
-                    backgroundSize: '50px 50px'
+                    background:
+                        'radial-gradient(600px 400px at 12% 18%, hsl(var(--brand) / 0.10), transparent 70%), radial-gradient(520px 380px at 88% 12%, hsl(var(--brand-2) / 0.08), transparent 70%), radial-gradient(560px 420px at 30% 95%, hsl(var(--positive) / 0.07), transparent 70%)',
                 }}
             />
+            <div className="grid-fade absolute inset-0 opacity-40" />
 
             {/* Candlestick Chart */}
             <div
-                className="absolute inset-0 flex items-center justify-center opacity-20 dark:opacity-30 transition-opacity duration-700"
+                className="absolute inset-0 flex items-center justify-center opacity-20 dark:opacity-25"
                 style={{
                     WebkitMaskImage: 'linear-gradient(to right, transparent 5%, black 20%, black 80%, transparent 95%)',
                     maskImage: 'linear-gradient(to right, transparent 5%, black 20%, black 80%, transparent 95%)',
@@ -104,7 +100,7 @@ export function AnimatedBackground() {
                     >
                         {candles.map((candle, i) => {
                             const isGreen = candle.close >= candle.open
-                            const color = isGreen ? "#6366f1" : "#8b5cf6" // Indigo-500 : Violet-500
+                            const color = isGreen ? "hsl(var(--positive))" : "hsl(var(--negative))"
                             const yHigh = getY(candle.high) + "%"
                             const yLow = getY(candle.low) + "%"
                             const yOpen = getY(candle.open) + "%"
@@ -141,7 +137,7 @@ export function AnimatedBackground() {
                     <motion.path
                         d={`M ${candles.map((c, i) => `${i * TOTAL_CANDLE_SPACE + CANDLE_WIDTH / 2} ${getY((c.open + c.close) / 2)}`).join(' L ')}`}
                         fill="none"
-                        stroke="#3b82f6" // Blue-500 for MA
+                        stroke="hsl(var(--brand))"
                         strokeWidth="1.5"
                         className="opacity-30"
                         initial={false} // Don't animate initial
