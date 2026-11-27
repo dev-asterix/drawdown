@@ -74,6 +74,12 @@ export function LoginScreen() {
                         />
                     </CardContent>
 
+                    <div className="px-8 pb-4 text-center">
+                        <Link href="/demo" className="inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline">
+                            Explore the live demo →
+                        </Link>
+                    </div>
+
                     <div className="px-8 pb-8 text-center text-[11px] text-gray-500 dark:text-gray-400 relative z-10 leading-relaxed">
                         <p>By continuing, you agree to our <Link href="/terms" className="underline underline-offset-2 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200">Terms</Link> and <Link href="/privacy" className="underline underline-offset-2 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200">Privacy Policy</Link>.</p>
                     </div>

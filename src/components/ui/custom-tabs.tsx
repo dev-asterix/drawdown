@@ -2,12 +2,13 @@
 
 import * as React from "react"
 import { LucideIcon } from "lucide-react"
+import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils/utils"
 
 export interface TabItem {
   id: string
   label: string
-  icon: LucideIcon
+  icon?: LucideIcon
 }
 
 interface CustomTabsProps {
@@ -15,37 +16,51 @@ interface CustomTabsProps {
   value: string
   onValueChange: (value: string) => void
   className?: string
+  size?: "sm" | "md"
+  /** Hide labels below the sm breakpoint (icons only). */
+  compact?: boolean
 }
 
-export function CustomTabs({ items, value, onValueChange, className }: CustomTabsProps) {
+/**
+ * Segmented control with a spring-animated active indicator.
+ */
+export function CustomTabs({ items, value, onValueChange, className, size = "md", compact }: CustomTabsProps) {
+  const id = React.useId()
+  const reduce = useReducedMotion()
+
   return (
-    <div className={cn(
-      "flex p-1.5 bg-gray-100/80 dark:bg-slate-800/80 rounded-xl w-fit backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 shadow-sm",
-      className
-    )}>
+    <div
+      role="tablist"
+      className={cn(
+        "relative flex w-fit items-center gap-0.5 rounded-xl border border-border/80 bg-muted/60 p-1",
+        className
+      )}
+    >
       {items.map((item) => {
         const Icon = item.icon
+        const active = value === item.id
         return (
           <button
             key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
             onClick={() => onValueChange(item.id)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
-              value === item.id
-                ? 'bg-white dark:bg-slate-900 shadow-md scale-[1.02]'
-                : 'hover:bg-white/50 dark:hover:bg-slate-900/50'
-            }`}
+            className={cn(
+              "relative flex items-center gap-1.5 rounded-lg font-medium outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring",
+              size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
+              active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
           >
-            <Icon className={cn(
-              "w-4 h-4",
-              value === item.id
-                ? "text-gray-900 dark:text-white"
-                : "text-gray-600 dark:text-gray-400"
-            )} />
-            <span className={cn(
-              value === item.id
-                ? "text-gray-900 dark:text-white"
-                : "text-gray-600 dark:text-gray-400"
-            )}>{item.label}</span>
+            {active && (
+              <motion.span
+                layoutId={`tab-indicator-${id}`}
+                className="absolute inset-0 rounded-lg bg-card shadow-sm ring-1 ring-border/80"
+                transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
+              />
+            )}
+            {Icon && <Icon className="relative h-3.5 w-3.5" />}
+            <span className={cn("relative", compact && Icon && "hidden sm:inline")}>{item.label}</span>
           </button>
         )
       })}

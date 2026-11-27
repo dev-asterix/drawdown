@@ -8,6 +8,10 @@ const config: Config = {
 		'./app/**/*.{ts,tsx}',
 		'./src/**/*.{ts,tsx}',
 	],
+	// Heatmap intensity classes are composed at runtime (bg-gain-3, bg-loss-5…)
+	safelist: [
+		{ pattern: /^bg-(gain|loss)-(1|2|3|4|5)$/ },
+	],
 	theme: {
 		container: {
 			center: true,
@@ -57,6 +61,13 @@ const config: Config = {
 				positive: 'hsl(var(--positive))',
 				negative: 'hsl(var(--negative))',
 				neutral: 'hsl(var(--neutral))',
+				warning: 'hsl(var(--warning))',
+				info: 'hsl(var(--info))',
+				brand: {
+					DEFAULT: 'hsl(var(--brand))',
+					2: 'hsl(var(--brand-2))',
+				},
+				grid: 'hsl(var(--grid))',
 				gain: {
 					1: 'hsl(var(--gain-1))',
 					2: 'hsl(var(--gain-2))',
@@ -123,6 +134,9 @@ const config: Config = {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			transitionTimingFunction: {
+				'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
 			}
 		}
 	},

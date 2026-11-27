@@ -4,6 +4,40 @@ Complete feature documentation for Drawdown portfolio tracker.
 
 ## Core Features
 
+### 🧭 Redesigned Dashboard (v2)
+
+The dashboard is driven by a pure analytics engine (`src/lib/analytics/`) and filters
+ranges on the client, so switching periods is instant and every view can be compared
+against the previous period.
+
+- **Pulse hero** – animated net P&L, return, equity curve backdrop and a 0–100
+  *system health* score (edge, accuracy, payoff, risk control, consistency).
+- **Latest session** – today's (or the last) session with rank, percentile and
+  distance from your average, plus a clickable strip of the last 24 sessions.
+- **Metric tiles** – win rate, profit factor, expectancy, payoff, max drawdown and
+  streak, each with a delta vs the prior period and a rolling sparkline.
+- **Performance studio** – Equity (absolute / R-multiple, peak line, synced
+  underwater chart), P&L (raw / clipped / log), Drawdown, Rolling form and Calendar
+  (month grid with weekly totals, or 12-month heatmap). Daily / weekly / monthly
+  aggregation and a brush to zoom.
+- **Signals** – on-device pattern detection (tilt after losses, weak weekdays,
+  outlier losses, profit concentration, break-even edge margin, streaks, costly
+  behaviour tags). Each signal links to the session, period or journal filter behind it.
+- **Deep dive** – year × month returns matrix, weekday edge, P&L distribution
+  (σ, percentiles), drawdown episodes and behaviour analysis.
+- **Stop-loss simulator** – replays real sessions with a hard daily loss limit
+  (defaults to your median losing day).
+
+**Drill-down:** click any chart point to open that session; click a week, month,
+drawdown episode or streak to zoom the whole dashboard into it (with breadcrumbs and
+Back). Click a weekday or tag to filter the journal.
+
+**Session drawer:** rank, percentile, z-score, equity impact, the session's week,
+same-weekday baseline, neighbouring sessions, behaviour tags and auto-saving notes.
+Step through sessions with ← / →.
+
+**Demo:** `/demo` shows the dashboard with generated sample data — nothing is saved.
+
 ### 📊 KPI Dashboard
 
 Real-time portfolio performance metrics displayed as interactive cards:

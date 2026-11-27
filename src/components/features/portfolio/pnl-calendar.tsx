@@ -44,19 +44,22 @@ export function PnLCalendar({ data, className, dateRange, onDayClick, showWeekly
   }, [months, selectedQuarter, isMobile]);
 
   const pnlMap = useMemo(() => {
+    // Key by local calendar day and sum same-day entries
     const map = new Map<string, DailyPnL>();
     data.forEach((entry) => {
-      const key = new Date(entry.date).toISOString().split('T')[0];
-      map.set(key, entry);
+      const key = format(new Date(entry.date), 'yyyy-MM-dd');
+      const existing = map.get(key);
+      if (existing) map.set(key, { ...existing, pnl: existing.pnl + entry.pnl });
+      else map.set(key, { ...entry });
     });
     return map;
   }, [data]);
 
   const maxAbs = useMemo(() => {
     let m = 0;
-    data.forEach((d) => { m = Math.max(m, Math.abs(d.pnl)); });
+    pnlMap.forEach((d) => { m = Math.max(m, Math.abs(d.pnl)); });
     return m;
-  }, [data]);
+  }, [pnlMap]);
 
   const isInRange = (date: Date) => {
     if (!dateRange) return true;
@@ -164,7 +167,7 @@ export function PnLCalendar({ data, className, dateRange, onDayClick, showWeekly
                                   <button
                                     onClick={() => handleDayClick(day)}
                                     className={cn(
-                                      'w-3 h-3 rounded-[1px] transition-colors duration-150 motion-reduce:duration-0 focus:outline-none focus:ring-1 focus:ring-ring',
+                                      'w-3 h-3 rounded-[3px] transition-transform duration-150 motion-reduce:duration-0 focus:outline-none focus:ring-1 focus:ring-ring',
                                       getColorClass(pnl),
                                       !inRange && 'opacity-40',
                                       onDayClick && 'cursor-pointer hover:scale-110'
