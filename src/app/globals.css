@@ -29,14 +29,6 @@
     --chart-3: 271 81% 56%;
     --chart-4: 41 96% 60%;
     --chart-5: 340 82% 52%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 217.2 91.2% 59.8%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 32% 91%;
-    --sidebar-accent-foreground: 222.2 47% 11%;
-    --sidebar-border: 214 32% 88%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Semantic state tokens */
     --positive: 152 76% 36%;
@@ -83,14 +75,6 @@
     --chart-3: 271 81% 56%;
     --chart-4: 41 96% 60%;
     --chart-5: 340 82% 52%;
-    --sidebar-background: 222.2 47% 7%;
-    --sidebar-foreground: 213 31% 91%;
-    --sidebar-primary: 217.2 91.2% 59.8%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217.2 33% 17%;
-    --sidebar-accent-foreground: 213 31% 91%;
-    --sidebar-border: 217.2 33% 17%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Semantic state tokens */
     --positive: 152 76% 50%;
