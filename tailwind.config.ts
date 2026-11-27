@@ -68,6 +68,8 @@ const config: Config = {
 					2: 'hsl(var(--brand-2))',
 				},
 				grid: 'hsl(var(--grid))',
+				raised: 'hsl(var(--raised))',
+				sunken: 'hsl(var(--sunken))',
 				gain: {
 					1: 'hsl(var(--gain-1))',
 					2: 'hsl(var(--gain-2))',
@@ -137,6 +139,18 @@ const config: Config = {
 			},
 			transitionTimingFunction: {
 				'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+				'standard': 'cubic-bezier(0.2, 0, 0, 1)',
+			},
+			transitionDuration: {
+				DEFAULT: '150ms',
+				fast: '120ms',
+				base: '180ms',
+			},
+			boxShadow: {
+				'elev-1': 'var(--highlight), var(--elev-1)',
+				'elev-2': 'var(--highlight), var(--elev-2)',
+				'elev-3': 'var(--highlight), var(--elev-3)',
+				inset: 'var(--inset)',
 			}
 		}
 	},

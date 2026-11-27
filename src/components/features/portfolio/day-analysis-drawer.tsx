@@ -198,9 +198,9 @@ export function DayAnalysisDrawer({
             ) : (
               <motion.div
                 key={day.key}
-                initial={reduce ? false : { opacity: 0, y: 8 }}
+                initial={reduce ? false : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.18 }}
                 className="space-y-5 p-5"
               >
                 {/* Context */}
@@ -259,7 +259,7 @@ export function DayAnalysisDrawer({
                             )}
                             initial={{ height: reduce ? h : 0 }}
                             animate={{ height: h }}
-                            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                           />
                           <span className={cn('text-[10px]', selected ? 'font-semibold' : 'text-muted-foreground')}>{WEEKDAY_LABELS[w.date.getDay()]}</span>
                         </button>
@@ -269,7 +269,7 @@ export function DayAnalysisDrawer({
                 </div>
 
                 {/* Same weekday baseline */}
-                <div className="rounded-xl bg-muted/50 p-3 text-xs">
+                <div className="well p-3 text-xs">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="font-medium">Your {format(date, 'EEEE')}s</span>
                     <span className="text-muted-foreground">{context.wdCount} sessions</span>
@@ -328,7 +328,7 @@ export function DayAnalysisDrawer({
                           disabled={!onUpdate || !primary}
                           aria-pressed={on}
                           className={cn(
-                            'rounded-full border px-2.5 py-1 text-xs font-medium transition-all active:scale-95 disabled:opacity-50',
+                            'rounded-full border px-2.5 py-1 text-xs font-medium transition-[background-color,border-color,color,transform] duration-fast active:scale-95 disabled:opacity-50',
                             on
                               ? t.good ? 'border-positive/50 bg-positive/15 text-positive' : 'border-warning/50 bg-warning/15 text-warning'
                               : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground',
@@ -383,7 +383,7 @@ export function DayAnalysisDrawer({
 
 function Mini({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: number }) {
   return (
-    <div className="rounded-xl bg-muted/50 px-3 py-2">
+    <div className="well px-3 py-2">
       <p className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className={cn('text-sm font-semibold tabular-nums', tone === undefined ? '' : toneClass(tone))}>{value}</p>
       {sub && <p className="truncate text-[10px] text-muted-foreground">{sub}</p>}

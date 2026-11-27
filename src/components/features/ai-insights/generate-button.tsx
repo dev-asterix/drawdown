@@ -25,7 +25,7 @@ export function GenerateButton({ insightType, disabled, loading, onClick }: Gene
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'group flex w-full items-center gap-3 rounded-xl border border-border/80 bg-background/40 p-2.5 text-left outline-none transition-all',
+        'group surface-interactive flex w-full items-center gap-3 rounded-xl border border-border bg-card p-2.5 text-left shadow-elev-1 outline-none',
         'hover:border-primary/40 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
       )}
     >

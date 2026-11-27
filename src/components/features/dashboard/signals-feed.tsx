@@ -92,17 +92,17 @@ export function SignalsFeed({ days, onAction }: SignalsFeedProps) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.35, delay: reduce ? 0 : i * 0.04 }}
+                  transition={{ duration: 0.22, delay: reduce ? 0 : i * 0.02 }}
                 >
                   {interactive ? (
                     <button
                       onClick={() => onAction(s.action!)}
-                      className="group relative flex w-full items-start gap-3 rounded-xl border border-border/70 bg-background/40 p-3 pl-4 text-left outline-none transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring"
+                      className="group relative flex w-full items-start gap-3 rounded-xl border border-border bg-card p-3 pl-4 text-left shadow-elev-1 outline-none surface-interactive hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {Body}
                     </button>
                   ) : (
-                    <div className="relative flex items-start gap-3 rounded-xl border border-border/70 bg-background/40 p-3 pl-4">{Body}</div>
+                    <div className="relative flex items-start gap-3 rounded-xl border border-border bg-card p-3 pl-4 shadow-elev-1">{Body}</div>
                   )}
                 </motion.li>
               );

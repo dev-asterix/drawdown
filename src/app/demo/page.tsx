@@ -41,7 +41,7 @@ export default function DemoPage() {
         <AddTransactionForm
           onAdd={onAdd}
           trigger={
-            <Button className="h-9 w-9 rounded-xl bg-primary text-primary-foreground md:w-auto md:px-3">
+            <Button className="h-9 w-9 md:w-auto md:px-3">
               <Plus className="h-4 w-4" />
               <span className="ml-2 hidden text-sm font-medium md:inline">Add P&L</span>
             </Button>
@@ -49,7 +49,7 @@ export default function DemoPage() {
         />
       }
       refreshButton={
-        <Button asChild variant="outline" className="h-9 rounded-xl border-border/80 bg-card px-3 text-sm">
+        <Button asChild variant="outline" className="h-9 px-3 md:h-10">
           <Link href="/"><LogIn className="mr-1.5 h-4 w-4" />Sign in</Link>
         </Button>
       }

@@ -9,21 +9,11 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="relative group flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-900 hover:from-gray-200 hover:to-gray-300 dark:hover:from-slate-700 dark:hover:to-slate-800 transition-all duration-300 border border-gray-300/50 dark:border-slate-700/50 shadow-sm hover:shadow-md active:scale-95 overflow-hidden"
+      className="pressable flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-elev-1 hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60 md:h-10 md:w-10"
       title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
       aria-label="Toggle theme"
     >
-      {/* Animated background glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-purple-500/0 to-blue-500/0 group-hover:from-blue-500/10 group-hover:via-purple-500/10 group-hover:to-blue-500/10 transition-all duration-500" />
-      
-      {/* Icons with rotation animation */}
-      <div className="relative">
-        {theme === 'light' ? (
-          <Moon className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-200 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" />
-        ) : (
-          <Sun className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-200 transition-all duration-300 group-hover:rotate-180 group-hover:scale-110" />
-        )}
-      </div>
+      {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
     </button>
   );
 }

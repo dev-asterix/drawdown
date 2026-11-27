@@ -40,7 +40,7 @@ function Spark({ data, tone }: { data: number[]; tone: 'positive' | 'negative' |
   const color = tone === 'positive' ? 'hsl(var(--positive))' : tone === 'negative' ? 'hsl(var(--negative))' : 'hsl(var(--brand))';
   const id = `spark-${tone}`;
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 opacity-70" aria-hidden>
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-11 opacity-45 [mask-image:linear-gradient(to_top,transparent,black_60%)]" aria-hidden>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={series} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
           <defs>
@@ -50,7 +50,7 @@ function Spark({ data, tone }: { data: number[]; tone: 'positive' | 'negative' |
             </linearGradient>
           </defs>
           <YAxis hide domain={['dataMin', 'dataMax']} />
-          <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.25} strokeOpacity={0.7} fill={`url(#${id})`} isAnimationActive animationDuration={900} />
+          <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.25} strokeOpacity={0.7} fill={`url(#${id})`} isAnimationActive animationDuration={450} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

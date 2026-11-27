@@ -69,7 +69,7 @@ export function PulseHero({ days, stats, previousStats, rangeLabel, health }: Pu
                 strokeWidth={1.5}
                 fill="url(#pulseFill)"
                 isAnimationActive
-                animationDuration={1200}
+                animationDuration={600}
                 animationEasing="ease-out"
               />
             </AreaChart>
@@ -81,7 +81,7 @@ export function PulseHero({ days, stats, previousStats, rangeLabel, health }: Pu
         <div className="min-w-0 space-y-4 md:pb-28">
           <div className="flex flex-wrap items-center gap-2">
             <span className="eyebrow">Net P&L</span>
-            <span className="rounded-full border border-border/80 bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground backdrop-blur">
+            <span className="rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground shadow-elev-1">
               {rangeLabel}
             </span>
           </div>
@@ -135,7 +135,7 @@ export function PulseHero({ days, stats, previousStats, rangeLabel, health }: Pu
         </div>
 
         {/* Health gauge */}
-        <div className="flex items-center gap-4 rounded-2xl border border-border/80 bg-background/70 p-4 backdrop-blur md:flex-col md:items-stretch md:w-56">
+        <div className="flex items-center gap-4 surface-raised p-4 md:flex-col md:items-stretch md:w-56">
           <div className="flex items-center gap-3 md:justify-between">
             <Ring value={health.score} size={76} stroke={7} indicatorClassName={meta.ring}>
               <div className="text-center leading-none">

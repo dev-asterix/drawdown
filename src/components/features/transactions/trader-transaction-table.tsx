@@ -296,23 +296,20 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
   };
 
   return (
-    <Card className="border-gray-200/60 dark:border-slate-800/60 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-xl rounded-2xl overflow-hidden">
+    <Card className="overflow-hidden">
       <CardHeader className="p-4 md:p-6 pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-2">
-              <span>📊</span>
-              <span className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent">
-                Trading Journal
-              </span>
-            </CardTitle>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <CardTitle className="text-base font-semibold tracking-tight">Trading journal</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
               {transactions.length} trading days • Pattern recognition over scrolling
             </p>
           </div>
           
           {/* View Mode Toggle */}
           <CustomTabs
+            size="sm"
+            compact
             items={tabItems}
             value={viewMode}
             onValueChange={(value) => {
@@ -326,11 +323,11 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
       <CardContent className="p-4 md:p-6 pt-0">
         {transactions.length === 0 ? (
           <div className="text-center py-12">
-            <div className="p-4 bg-gray-100 dark:bg-slate-800 rounded-full w-fit mx-auto mb-4">
-              <Layers className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+            <div className="p-4 bg-muted rounded-full w-fit mx-auto mb-4">
+              <Layers className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No trading data yet</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Start adding your daily P&L to track performance</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No trading data yet</h3>
+            <p className="text-sm text-muted-foreground">Start adding your daily P&L to track performance</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -338,20 +335,20 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-200/60 dark:border-slate-800/60">
+                  <TableRow className="border-border">
                     {viewMode === 'weekly' ? (
                       <>
-                        <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Week</TableHead>
-                        <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">P&L</TableHead>
-                        <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Win%</TableHead>
-                        <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Damage Efficiency</TableHead>
-                        <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Best/Worst</TableHead>
-                        <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Trend</TableHead>
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Week</TableHead>
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">P&L</TableHead>
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Win%</TableHead>
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Damage Efficiency</TableHead>
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Best/Worst</TableHead>
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trend</TableHead>
                       </>
                     ) : (
                       <>
                         <TableHead 
-                          className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800"
+                          className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-accent"
                           onClick={() => handleSort('date')}
                         >
                           <div className="flex items-center">
@@ -360,7 +357,7 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                           </div>
                         </TableHead>
                         <TableHead 
-                          className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800"
+                          className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-accent"
                           onClick={() => handleSort('pnl')}
                         >
                           <div className="flex items-center">
@@ -370,14 +367,14 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                         </TableHead>
                         {viewMode === 'compressed' && (
                           <>
-                            <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Impact</TableHead>
-                            <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Behavior</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Impact</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Behavior</TableHead>
                           </>
                         )}
                         {viewMode === 'daily' && (
-                          <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Notes</TableHead>
+                          <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes</TableHead>
                         )}
-                        <TableHead className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-12"></TableHead>
+                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-12"></TableHead>
                       </>
                     )}
                   </TableRow>
@@ -386,20 +383,20 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                   {viewMode === 'weekly' ? (
                     // Weekly View
                     weeklyGroups.slice(startIndex, endIndex).map((week, index) => (
-                      <TableRow key={index} className="border-gray-100 dark:border-slate-800 hover:bg-gray-50/50 dark:hover:bg-slate-800/50">
+                      <TableRow key={index} className="border-border hover:bg-accent">
                         <TableCell>
                           <div className="space-y-1">
                             <p className="font-medium text-sm">
                               {format(week.weekStart, 'MMM d')} - {format(week.weekEnd, 'MMM d')}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               {week.trades.length} days • {week.winDays}W-{week.lossDays}L
                             </p>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className={cn("font-bold", getColorClass(week.totalPnL))}>
-                            {week.totalPnL >= 0 ? '+' : ''}<FormattedCurrency value={Math.abs(week.totalPnL)} />
+                            {week.totalPnL >= 0 ? '+' : '−'}<FormattedCurrency value={Math.abs(week.totalPnL)} />
                           </div>
                         </TableCell>
                         <TableCell>
@@ -410,7 +407,7 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                         <TableCell>
                           <div className={cn("font-bold text-sm", 
                             week.damageEfficiency >= 2 ? 'text-positive' :
-                            week.damageEfficiency >= 1 ? 'text-amber-600 dark:text-amber-400' : 'text-negative'
+                            week.damageEfficiency >= 1 ? 'text-warning' : 'text-negative'
                           )}>
                             {week.damageEfficiency === 999 ? '∞' : week.damageEfficiency.toFixed(1)}
                           </div>
@@ -435,13 +432,13 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                   ) : viewMode === 'monthly' ? (
                     // Monthly View
                     monthlyGroups.slice(startIndex, endIndex).map((month, index) => (
-                      <TableRow key={index} className="border-gray-100 dark:border-slate-800 hover:bg-gray-50/50 dark:hover:bg-slate-800/50">
+                      <TableRow key={index} className="border-border hover:bg-accent">
                         <TableCell>
                           <div className="space-y-1">
                             <p className="font-medium text-sm">
                               {format(month.monthStart, 'MMMM yyyy')}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               {month.tradingDays} days • {month.winDays}W-{month.lossDays}L • Avg: <FormattedCurrency value={month.averageDaily} short />
                             </p>
                           </div>
@@ -449,9 +446,9 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                         <TableCell>
                           <div className="space-y-1">
                             <div className={cn("font-bold text-sm", getColorClass(month.totalPnL))}>
-                              {month.totalPnL >= 0 ? '+' : ''}<FormattedCurrency value={Math.abs(month.totalPnL)} />
+                              {month.totalPnL >= 0 ? '+' : '−'}<FormattedCurrency value={Math.abs(month.totalPnL)} />
                             </div>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               Max DD: <FormattedCurrency value={month.maxDrawdown} short />
                             </p>
                           </div>
@@ -461,7 +458,7 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                             <Badge variant={month.winRate >= 50 ? 'default' : 'destructive'} className="text-xs">
                               {month.winRate.toFixed(0)}%
                             </Badge>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               Sharpe: {month.sharpeRatio.toFixed(2)}
                             </p>
                           </div>
@@ -479,7 +476,7 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                         <TableCell>
                           <div className="text-xs space-y-1">
                             <div>📊 {month.profitableDays}/{month.tradingDays}</div>
-                            <div className="text-gray-500">
+                            <div className="text-muted-foreground">
                               {((month.profitableDays / month.tradingDays) * 100).toFixed(0)}% Hit
                             </div>
                           </div>
@@ -489,14 +486,14 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                   ) : (
                     // Daily Views (both compressed and detailed)
                     (sortedTransactions.slice(startIndex, endIndex) as DailyPnL[]).map((transaction) => (
-                      <TableRow key={transaction.id} className="border-gray-100 dark:border-slate-800 hover:bg-gray-50/50 dark:hover:bg-slate-800/50">
+                      <TableRow key={transaction.id} className="border-border hover:bg-accent">
                         <TableCell>
                           <FormattedDate date={transaction.date} />
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <span className={cn("font-bold", getColorClass(transaction.pnl))}>
-                              {transaction.pnl >= 0 ? '+' : ''}<FormattedCurrency value={Math.abs(transaction.pnl)} />
+                              {transaction.pnl >= 0 ? '+' : '−'}<FormattedCurrency value={Math.abs(transaction.pnl)} />
                             </span>
                             {transaction.pnl >= 0 ? 
                               <TrendingUp className="h-3 w-3 text-positive" /> : 
@@ -523,13 +520,13 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                                   return (
                                     <div key={idx} title={mistake.label}>
                                       <Icon 
-                                        className="h-3 w-3 text-amber-500" 
+                                        className="h-3 w-3 text-warning" 
                                       />
                                     </div>
                                   );
                                 })}
                                 {transaction.notes?.trim() && !getMistakeIcons(transaction.notes).length && (
-                                  <div className="text-xs text-blue-500">📝</div>
+                                  <div className="text-xs text-primary">📝</div>
                                 )}
                               </div>
                             </TableCell>
@@ -551,10 +548,10 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                                       disabled={!onUpdate || isLoading}
                                       className={cn(
                                         "px-2 py-1 text-xs rounded-md border transition-colors flex items-center gap-1",
-                                        onUpdate && !isLoading ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-50",
+                                        onUpdate && !isLoading ? "cursor-pointer " : "cursor-not-allowed opacity-50",
                                         transaction.notes?.toLowerCase().includes(tag.toLowerCase()) 
-                                          ? "bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-300"
-                                          : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 border-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
+                                          ? "bg-warning/10 text-warning border-warning/30"
+                                          : "bg-muted text-muted-foreground border-border hover:bg-accent"
                                       )}
                                       title={isLoading ? 'Updating...' : `Click to ${transaction.notes?.toLowerCase().includes(tag.toLowerCase()) ? 'remove' : 'add'} "${tag}" tag`}
                                     >
@@ -571,7 +568,7 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                                 })}
                               </div>
                               {transaction.notes?.trim() && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                <p className="text-xs text-muted-foreground truncate">
                                   {transaction.notes}
                                 </p>
                               )}
@@ -614,37 +611,37 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
               {viewMode === 'weekly' ? (
                 // Weekly Mobile Cards
                 weeklyGroups.slice(startIndex, endIndex).map((week, index) => (
-                  <div key={index} className="bg-white dark:bg-slate-800/50 border border-gray-200/60 dark:border-slate-700/60 rounded-xl p-4 space-y-3">
+                  <div key={index} className="bg-card border border-border rounded-xl p-4 space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="font-semibold text-sm">
                           {format(week.weekStart, 'MMM d')} - {format(week.weekEnd, 'MMM d')}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-muted-foreground mt-1">
                           {week.trades.length} days • {week.winDays}W-{week.lossDays}L
                         </div>
                       </div>
                       <div className={cn("text-right")}>
                         <div className={cn("font-bold text-base", getColorClass(week.totalPnL))}>
-                          {week.totalPnL >= 0 ? '+' : ''}<FormattedCurrency value={Math.abs(week.totalPnL)} />
+                          {week.totalPnL >= 0 ? '+' : '−'}<FormattedCurrency value={Math.abs(week.totalPnL)} />
                         </div>
                         <Badge variant={week.winRate >= 50 ? 'default' : 'destructive'} className="text-xs mt-1">
                           {week.winRate.toFixed(0)}% Win
                         </Badge>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100 dark:border-slate-700">
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
                       <div>
-                        <div className="text-xs text-gray-500 mb-1">Damage Efficiency</div>
+                        <div className="text-xs text-muted-foreground mb-1">Damage Efficiency</div>
                         <div className={cn("font-bold text-sm", 
                           week.damageEfficiency >= 2 ? 'text-positive' :
-                          week.damageEfficiency >= 1 ? 'text-amber-600 dark:text-amber-400' : 'text-negative'
+                          week.damageEfficiency >= 1 ? 'text-warning' : 'text-negative'
                         )}>
                           {week.damageEfficiency === 999 ? '∞' : week.damageEfficiency.toFixed(1)}
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500 mb-1">Best/Worst</div>
+                        <div className="text-xs text-muted-foreground mb-1">Best/Worst</div>
                         <div className="space-y-0.5 text-xs">
                           <div className="text-positive">
                             +<FormattedCurrency value={week.bestDay} short />
@@ -660,34 +657,34 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
               ) : viewMode === 'monthly' ? (
                 // Monthly Mobile Cards
                 monthlyGroups.slice(startIndex, endIndex).map((month, index) => (
-                  <div key={index} className="bg-white dark:bg-slate-800/50 border border-gray-200/60 dark:border-slate-700/60 rounded-xl p-4 space-y-3">
+                  <div key={index} className="bg-card border border-border rounded-xl p-4 space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="font-semibold text-sm">
                           {format(month.monthStart, 'MMMM yyyy')}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-muted-foreground mt-1">
                           {month.tradingDays} days • {month.winDays}W-{month.lossDays}L
                         </div>
                       </div>
                       <div className="text-right">
                         <div className={cn("font-bold text-base", getColorClass(month.totalPnL))}>
-                          {month.totalPnL >= 0 ? '+' : ''}<FormattedCurrency value={Math.abs(month.totalPnL)} />
+                          {month.totalPnL >= 0 ? '+' : '−'}<FormattedCurrency value={Math.abs(month.totalPnL)} />
                         </div>
                         <Badge variant={month.winRate >= 50 ? 'default' : 'destructive'} className="text-xs mt-1">
                           {month.winRate.toFixed(0)}% Win
                         </Badge>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100 dark:border-slate-700">
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
                       <div>
-                        <div className="text-xs text-gray-500 mb-1">Win Rate</div>
+                        <div className="text-xs text-muted-foreground mb-1">Win Rate</div>
                         <Badge variant={month.winRate >= 50 ? 'default' : 'destructive'} className="text-xs">
                           {month.winRate.toFixed(0)}%
                         </Badge>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500 mb-1">Avg Daily</div>
+                        <div className="text-xs text-muted-foreground mb-1">Avg Daily</div>
                         <div className="text-sm font-medium">
                           <FormattedCurrency value={month.averageDaily} short />
                         </div>
@@ -698,10 +695,10 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
               ) : (
                 // Daily/Compressed Mobile Cards
                 sortedTransactions.slice(startIndex, endIndex).map((transaction) => (
-                  <div key={transaction.id} className="bg-white dark:bg-slate-800/50 border border-gray-200/60 dark:border-slate-700/60 rounded-xl p-4">
+                  <div key={transaction.id} className="bg-card border border-border rounded-xl p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           <FormattedDate date={transaction.date} />
                         </div>
                         <div className={cn("text-lg font-bold mt-1", getColorClass(transaction.pnl))}>
@@ -754,8 +751,8 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                           {getMistakeIcons(transaction.notes || '').map((mistake, idx) => {
                             const Icon = mistake.icon;
                             return (
-                              <div key={idx} title={mistake.label} className="p-1 bg-amber-100 dark:bg-amber-900/20 rounded">
-                                <Icon className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                              <div key={idx} title={mistake.label} className="p-1 bg-warning/10 rounded">
+                                <Icon className="h-3 w-3 text-warning" />
                               </div>
                             );
                           })}
@@ -764,7 +761,7 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                     )}
 
                     {viewMode === 'daily' && (
-                      <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-slate-700">
+                      <div className="space-y-2 pt-2 border-t border-border">
                         <div className="flex flex-wrap gap-1.5">
                           {['Revenge', 'Oversize', 'Late entry', 'Rule-followed'].map((tag) => {
                             const loadingKey = `${transaction.id}-${tag}`;
@@ -776,11 +773,11 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                                 onClick={() => toggleTag(transaction, tag)}
                                 disabled={!onUpdate || isLoading}
                                 className={cn(
-                                  "px-2 py-1 text-xs rounded-md border transition-all flex items-center gap-1",
+                                  "px-2 py-1 text-xs rounded-md border transition flex items-center gap-1",
                                   onUpdate && !isLoading ? "cursor-pointer active:scale-95" : "cursor-not-allowed opacity-50",
                                   transaction.notes?.toLowerCase().includes(tag.toLowerCase()) 
-                                    ? "bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700"
-                                    : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-slate-600"
+                                    ? "bg-warning/10 text-warning border-warning/30"
+                                    : "bg-muted text-muted-foreground border-border"
                                 )}
                               >
                                 {isLoading ? (
@@ -793,7 +790,7 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
                           })}
                         </div>
                         {transaction.notes?.trim() && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                          <p className="text-xs text-muted-foreground line-clamp-2">
                             {transaction.notes}
                           </p>
                         )}
@@ -806,8 +803,8 @@ export function TraderTransactionTable({ transactions, onDelete, onEdit, onUpdat
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-gray-200/60 dark:border-slate-800/60 pt-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center justify-between border-t border-border pt-4">
+                <p className="text-sm text-muted-foreground">
                   Showing {startIndex + 1} to {Math.min(endIndex, currentData.length)} of {currentData.length} {viewMode === 'weekly' ? 'weeks' : 'entries'}
                 </p>
                 <div className="flex items-center space-x-2">

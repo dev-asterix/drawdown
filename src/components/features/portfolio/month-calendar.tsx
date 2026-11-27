@@ -92,14 +92,13 @@ export function MonthCalendar({ days, initialMonth, onDayClick, onMonthDrill }: 
         <div className="pb-1">Week</div>
       </div>
 
-      <AnimatePresence mode="wait" initial={false} custom={direction}>
+      <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={format(month, 'yyyy-MM')}
           custom={direction}
-          initial={reduce ? false : { opacity: 0, x: direction * 24 }}
+          initial={reduce ? false : { opacity: 0, x: direction * 12 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={reduce ? undefined : { opacity: 0, x: direction * -24 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
           className="grid flex-1 auto-rows-fr gap-1"
         >
           {weeks.map((week) => {
@@ -123,7 +122,7 @@ export function MonthCalendar({ days, initialMonth, onDayClick, onMonthDrill }: 
                         outside && 'opacity-35',
                         future && 'cursor-not-allowed opacity-25',
                         entry
-                          ? cn('border-transparent hover:scale-[1.03] hover:shadow-md', bucket > 0 && `bg-${tone}-${bucket}`, bucket >= 4 && 'text-background dark:text-background')
+                          ? cn('border-transparent hover:shadow-elev-2', bucket > 0 && `bg-${tone}-${bucket}`, bucket >= 4 && 'text-background dark:text-background')
                           : 'border-dashed border-border/70 hover:border-primary/50',
                         isToday(date) && 'ring-2 ring-primary/70',
                       )}
@@ -138,7 +137,7 @@ export function MonthCalendar({ days, initialMonth, onDayClick, onMonthDrill }: 
                     </button>
                   );
                 })}
-                <div className={cn('flex flex-col items-end justify-center rounded-lg bg-muted/50 px-1.5 text-[10px] tabular-nums', weekDays.length === 0 && 'opacity-40')}>
+                <div className={cn('flex flex-col items-end justify-center well px-1.5 text-[10px] tabular-nums', weekDays.length === 0 && 'opacity-40')}>
                   <span className={cn('font-semibold', weekTotal > 0 ? 'text-positive' : weekTotal < 0 ? 'text-negative' : 'text-muted-foreground')}>
                     {weekDays.length ? money.signed(weekTotal) : '—'}
                   </span>

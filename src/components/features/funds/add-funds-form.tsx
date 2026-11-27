@@ -94,22 +94,22 @@ export function AddFundsForm({ onFundsAdded, trigger }: AddFundsFormProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger ? trigger : (
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Funds
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-gray-200/60 dark:border-slate-800/60 rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent">Add Funds Transaction</DialogTitle>
-          <DialogDescription className="text-base text-gray-600 dark:text-gray-400">
+          <DialogTitle className="text-xl font-semibold tracking-tight">Add Funds Transaction</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
             Record a deposit or withdrawal from your trading account.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-6 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Label htmlFor="date" className="text-right text-sm font-medium text-muted-foreground">
               Date
             </Label>
             <Input
@@ -119,19 +119,19 @@ export function AddFundsForm({ onFundsAdded, trigger }: AddFundsFormProps) {
               value={formData.date}
               onChange={handleChange}
               required
-              className="col-span-3 h-11 rounded-xl border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/30 transition-all duration-300"
+              className="col-span-3 h-11"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="type" className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Label htmlFor="type" className="text-right text-sm font-medium text-muted-foreground">
               Type
             </Label>
             <div className="col-span-3">
               <Select value={formData.type} onValueChange={handleTypeChange}>
-                <SelectTrigger className="h-11 rounded-xl border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/30 transition-all duration-300">
+                <SelectTrigger className="h-11">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-gray-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl">
+                <SelectContent className="rounded-xl border-border bg-card shadow-elev-3">
                   <SelectItem value="DEPOSIT" className="rounded-lg font-medium">Add Funds (Deposit)</SelectItem>
                   <SelectItem value="WITHDRAWAL" className="rounded-lg font-medium">Withdraw Funds</SelectItem>
                 </SelectContent>
@@ -139,7 +139,7 @@ export function AddFundsForm({ onFundsAdded, trigger }: AddFundsFormProps) {
             </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="amount" className="text-right pt-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Label htmlFor="amount" className="text-right pt-3 text-sm font-medium text-muted-foreground">
               Amount
             </Label>
             <div className="col-span-3 space-y-2">
@@ -153,15 +153,15 @@ export function AddFundsForm({ onFundsAdded, trigger }: AddFundsFormProps) {
                 value={formData.amount}
                 onChange={handleChange}
                 required
-                className="h-11 rounded-xl border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/30 transition-all duration-300"
+                className="h-11"
               />
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              <p className="text-sm text-muted-foreground font-medium">
                 Amount will be {formData.type === 'DEPOSIT' ? 'added to' : 'deducted from'} your total capital
               </p>
             </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="notes" className="text-right pt-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Label htmlFor="notes" className="text-right pt-3 text-sm font-medium text-muted-foreground">
               Notes
             </Label>
             <Textarea
@@ -170,14 +170,14 @@ export function AddFundsForm({ onFundsAdded, trigger }: AddFundsFormProps) {
               placeholder="Any notes about this transaction..."
               value={formData.notes}
               onChange={handleChange}
-              className="col-span-3 rounded-xl border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/30 transition-all duration-300 min-h-[100px]"
+              className="col-span-3 min-h-[100px]"
             />
           </div>
           <DialogFooter className="gap-3">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="rounded-xl h-11 font-medium border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-300">
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="h-11">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl h-11 font-medium shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 active:scale-95">
+            <Button type="submit" disabled={loading} className="h-11">
               {loading ? 'Processing...' : formData.type === 'DEPOSIT' ? 'Add Funds' : 'Withdraw'}
             </Button>
           </DialogFooter>

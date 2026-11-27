@@ -14,7 +14,7 @@ export function AnimatedNumber({
   value,
   format,
   className,
-  duration = 0.9,
+  duration = 0.55,
   from = 0,
 }: {
   value: number;
@@ -62,12 +62,13 @@ export function AnimatedNumber({
 
 const containerVariants: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
+  show: { transition: { staggerChildren: 0.035, delayChildren: 0 } },
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 14, filter: 'blur(4px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.55, ease: EASE_OUT_EXPO } },
+  // Opacity + transform only: both are compositor properties (no repaint)
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: EASE_OUT_EXPO } },
 };
 
 /** Staggers the entrance of its <Reveal> children. */
@@ -126,7 +127,7 @@ export function Ring({
           strokeDasharray={c}
           initial={{ strokeDashoffset: reduce ? c * (1 - pct / 100) : c }}
           animate={{ strokeDashoffset: c * (1 - pct / 100) }}
-          transition={{ duration: reduce ? 0 : 1.1, ease: EASE_OUT_EXPO }}
+          transition={{ duration: reduce ? 0 : 0.7, ease: EASE_OUT_EXPO }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">{children}</div>
@@ -139,12 +140,12 @@ export function GrowBar({ value, className, barClassName }: { value: number; cla
   const reduce = useReducedMotion();
   const pct = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
   return (
-    <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-muted', className)}>
+    <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-sunken shadow-inset', className)}>
       <motion.div
         className={cn('h-full rounded-full bg-primary', barClassName)}
         initial={{ width: reduce ? `${pct}%` : 0 }}
         animate={{ width: `${pct}%` }}
-        transition={{ duration: reduce ? 0 : 0.9, ease: EASE_OUT_EXPO }}
+        transition={{ duration: reduce ? 0 : 0.55, ease: EASE_OUT_EXPO }}
       />
     </div>
   );

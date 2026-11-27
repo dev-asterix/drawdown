@@ -13,6 +13,7 @@ import { AddTransactionForm } from '@/components/features/transactions/add-trans
 import { EditEquityForm } from '@/components/features/portfolio/edit-equity-form';
 import { FundHistory } from '@/components/features/funds/fund-history';
 import { DashboardView } from '@/components/features/dashboard/dashboard-view';
+import { DashboardSkeleton } from '@/components/features/dashboard/dashboard-skeleton';
 import { calculatePortfolioStats } from '@/lib/utils/calculate-stats';
 import { getCachedPortfolio, setCachedPortfolio } from '@/lib/local-cache';
 import { scheduleSync } from '@/lib/sync-queue';
@@ -146,13 +147,13 @@ export default function Dashboard() {
   const globalStats = useMemo(() => calculatePortfolioStats(entries, baseCapital), [entries, baseCapital]);
 
   if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center"><RefreshCw className="h-8 w-8 animate-spin" /></div>;
+    return <div className="app-backdrop flex min-h-screen items-center justify-center"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
   if (status === 'unauthenticated') return <LoginScreen />;
 
   return (
     <>
-      <LoadingLayer isLoading={loading} message="Syncing your portfolio data from cloud..." />
+      <LoadingLayer isLoading={loading} message="Syncing your portfolio…" />
       <SyncStatusIndicator />
       <AppLayout
         stats={globalStats}
@@ -171,7 +172,7 @@ export default function Dashboard() {
           <AddTransactionForm
             onAdd={handleAddEntry}
             trigger={
-              <Button className="h-9 w-9 rounded-xl bg-primary text-primary-foreground shadow-sm transition-all duration-300 hover:bg-primary/90 hover:shadow-md active:scale-95 md:w-auto md:px-3">
+              <Button className="h-9 w-9 md:w-auto md:px-3">
                 <Plus className="h-4 w-4" />
                 <span className="ml-2 hidden text-sm font-medium md:inline">Add P&L</span>
               </Button>
@@ -179,24 +180,27 @@ export default function Dashboard() {
           />
         }
         refreshButton={
-          <Button variant="outline" size="icon" onClick={fetchData} title="Refresh Data" className="h-9 w-9 rounded-xl border-border/80 bg-card shadow-sm transition-all duration-300 active:scale-95">
+          <Button variant="outline" size="icon" onClick={fetchData} title="Refresh Data" aria-label="Refresh data" className="h-9 w-9 md:h-10 md:w-10">
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         }
       >
         {optimisticError && (
-          <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg bg-destructive/90 px-4 py-3 text-sm text-destructive-foreground shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+          <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-xl border border-negative/30 bg-raised px-4 py-3 text-sm text-negative shadow-elev-3 animate-in fade-in-0 slide-in-from-bottom-2" role="alert">
             <span>{optimisticError}</span>
             <button onClick={() => setOptimisticError(null)} className="ml-2 text-xs underline">Dismiss</button>
           </div>
         )}
         {optimisticProgress && (
-          <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm shadow-lg">
+          <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-xl border border-border bg-raised px-4 py-3 text-sm shadow-elev-3">
             <RefreshCw className="h-4 w-4 animate-spin" />
             <span>Processing...</span>
           </div>
         )}
 
+        {loading && entries.length === 0 ? (
+          <DashboardSkeleton />
+        ) : (
         <DashboardView
           entries={entries}
           baseCapital={baseCapital}
@@ -205,6 +209,7 @@ export default function Dashboard() {
           onDelete={handleDeleteEntry}
           renderFunds={(range) => <FundHistory onFundUpdate={fetchData} dateRange={range} />}
         />
+        )}
       </AppLayout>
     </>
   );

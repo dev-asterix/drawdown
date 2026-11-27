@@ -80,16 +80,16 @@ export function EditTransactionForm({ entry, isOpen, onClose, onUpdate }: EditTr
 
   return (
     <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className="sm:max-w-[500px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-gray-200/60 dark:border-slate-800/60 rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent">Edit P&L Entry</DialogTitle>
-          <DialogDescription className="text-base text-gray-600 dark:text-gray-400">
+          <DialogTitle className="text-xl font-semibold tracking-tight">Edit P&L Entry</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
             Make changes to your daily P&L entry here. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-6 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Label htmlFor="date" className="text-right text-sm font-medium text-muted-foreground">
               Date
             </Label>
             <Input
@@ -99,11 +99,11 @@ export function EditTransactionForm({ entry, isOpen, onClose, onUpdate }: EditTr
               value={formData.date}
               onChange={handleChange}
               required
-              className="col-span-3 h-11 rounded-xl border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm focus:ring-2 focus:ring-positive/30 transition-all duration-300"
+              className="col-span-3 h-11"
             />
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="pnl" className="text-right pt-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Label htmlFor="pnl" className="text-right pt-3 text-sm font-medium text-muted-foreground">
               Amount
             </Label>
             <div className="col-span-3 space-y-2">
@@ -116,15 +116,15 @@ export function EditTransactionForm({ entry, isOpen, onClose, onUpdate }: EditTr
                 value={formData.pnl}
                 onChange={handleChange}
                 required
-                className="h-11 rounded-xl border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm focus:ring-2 focus:ring-positive/30 transition-all duration-300"
+                className="h-11"
               />
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              <p className="text-sm text-muted-foreground font-medium">
                 Positive for profit, negative for loss
               </p>
             </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="notes" className="text-right pt-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Label htmlFor="notes" className="text-right pt-3 text-sm font-medium text-muted-foreground">
               Notes
             </Label>
             <Textarea
@@ -133,14 +133,14 @@ export function EditTransactionForm({ entry, isOpen, onClose, onUpdate }: EditTr
               placeholder="Any notes about the day..."
               value={formData.notes}
               onChange={handleChange}
-              className="col-span-3 rounded-xl border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm focus:ring-2 focus:ring-positive/30 transition-all duration-300 min-h-[100px]"
+              className="col-span-3 min-h-[100px]"
             />
           </div>
           <DialogFooter className="gap-3">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl h-11 font-medium border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-300">
+            <Button type="button" variant="outline" onClick={onClose} className="h-11">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="bg-positive hover:bg-positive/90 text-white rounded-xl h-11 font-medium shadow-lg shadow-positive/30 hover:shadow-xl hover:shadow-positive/40 transition-all duration-300 active:scale-95">
+            <Button type="submit" disabled={loading} className="h-11">
               {loading ? 'Updating...' : 'Update P&L'}
             </Button>
           </DialogFooter>

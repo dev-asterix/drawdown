@@ -42,7 +42,7 @@ export function RangeBar({ range, onChange, trail, onBack }: RangeBarProps) {
               id="date"
               variant="outline"
               className={cn(
-                'h-[34px] justify-start gap-2 rounded-xl border-border/80 bg-card px-3 text-xs font-medium',
+                'h-[34px] justify-start gap-2 px-3 text-xs font-medium',
                 !quickValue && 'border-primary/50 text-foreground',
               )}
             >
@@ -84,7 +84,7 @@ export function RangeBar({ range, onChange, trail, onBack }: RangeBarProps) {
 
       {trail.length > 0 && (
         <nav aria-label="Drill-down path" className="flex flex-wrap items-center gap-1 text-xs">
-          <button onClick={onBack} className="mr-1 inline-flex items-center gap-1 rounded-lg border border-border/80 bg-card px-2 py-1 font-medium text-muted-foreground hover:text-foreground">
+          <button onClick={onBack} className="mr-1 inline-flex items-center gap-1 pressable rounded-lg border border-border bg-card px-2 py-1 font-medium text-muted-foreground hover:text-foreground">
             <Undo2 className="h-3 w-3" /> Back
           </button>
           {trail.map((r, i) => (

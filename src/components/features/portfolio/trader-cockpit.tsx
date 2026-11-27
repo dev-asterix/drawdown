@@ -59,7 +59,7 @@ export function TraderCockpit({ stats }: TraderCockpitProps) {
               </div>
               <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className={cn('h-2 rounded-full transition-all',
+                  className={cn('h-2 rounded-full transition',
                     stats.maxDrawdown <= maxAllowedDD * 0.7 ? 'bg-positive' :
                     stats.maxDrawdown <= maxAllowedDD ? 'bg-warning' : 'bg-negative'
                   )}

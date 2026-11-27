@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { Filter, X } from 'lucide-react';
 import type { DailyPnL } from '@/types/trading';
@@ -9,6 +9,7 @@ import { redactSnapshot } from '@/lib/ai/redact';
 import { describeRange, type Range } from '@/lib/analytics/range';
 import { BEHAVIOR_TAGS, hasTag } from '@/lib/analytics/tags';
 import { WEEKDAY_LABELS } from '@/lib/analytics/core';
+import { cn } from '@/lib/utils/utils';
 import type { SignalAction } from '@/lib/analytics/signals';
 import { useSettings } from '@/hooks/use-settings';
 import { Stagger, Reveal } from '@/components/motion/primitives';
@@ -29,6 +30,19 @@ import { StopLossSimulator } from './stop-loss-simulator';
 import { RangeBar } from './range-bar';
 
 type Focus = { type: 'weekday'; weekday: number } | { type: 'tag'; tag: string } | null;
+
+// Heavy panels only re-render when their own props change (e.g. opening the
+// drawer or typing a note no longer re-renders every chart).
+const PulseHeroM = memo(PulseHero);
+const SessionCardM = memo(SessionCard);
+const MetricTilesM = memo(MetricTiles);
+const EquityChartM = memo(EquityChart);
+const SignalsFeedM = memo(SignalsFeed);
+const DeepDiveM = memo(DeepDive);
+const JournalM = memo(TraderTransactionTable);
+const AIInsightsM = memo(AIInsightsSection);
+const SimulatorM = memo(StopLossSimulator);
+const CockpitM = memo(TraderCockpit);
 
 export interface DashboardViewProps {
   entries: DailyPnL[];
@@ -53,26 +67,39 @@ export function DashboardView({ entries, baseCapital, onAdd, onUpdate, onDelete,
   const [editing, setEditing] = useState<DailyPnL | null>(null);
   const journalRef = useRef<HTMLDivElement>(null);
 
-  const model = useDashboardModel(entries, baseCapital, range);
-  const rangeLabel = describeRange(range);
+  // Range clicks update the controls immediately; the expensive recompute of
+  // every chart runs as a non-blocking transition on a deferred value.
+  const [isPending, startTransition] = useTransition();
+  const deferredRange = useDeferredValue(range);
+  const model = useDashboardModel(entries, baseCapital, deferredRange);
+  const rangeLabel = describeRange(deferredRange);
+  const stale = isPending || deferredRange !== range;
 
   // --- range & drill-down ---------------------------------------------------
   const setRange = useCallback((r: Range | undefined) => {
-    setTrail([]);
-    setRangeState(r);
+    startTransition(() => {
+      setTrail([]);
+      setRangeState(r);
+    });
   }, []);
 
+  const rangeRef = useRef(range);
+  useEffect(() => { rangeRef.current = range; }, [range]);
   const drillTo = useCallback((from: Date, to: Date) => {
-    setTrail((t) => [...t, range]);
-    setRangeState({ from: startOfDay(from), to: endOfDay(to) });
-  }, [range]);
+    startTransition(() => {
+      setTrail((t) => [...t, rangeRef.current]);
+      setRangeState({ from: startOfDay(from), to: endOfDay(to) });
+    });
+  }, []);
 
   const drillBack = useCallback(() => {
-    setTrail((t) => {
-      const copy = [...t];
-      const prev = copy.pop();
-      setRangeState(prev);
-      return copy;
+    startTransition(() => {
+      setTrail((t) => {
+        const copy = [...t];
+        const prev = copy.pop();
+        setRangeState(prev);
+        return copy;
+      });
     });
   }, []);
 
@@ -81,7 +108,18 @@ export function DashboardView({ entries, baseCapital, onAdd, onUpdate, onDelete,
     setDrawerOpen(true);
   }, []);
 
-  const scrollToJournal = () => setTimeout(() => journalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  const scrollToJournal = useCallback(() => {
+    setTimeout(() => journalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }, []);
+  const onWeekday = useCallback((w: number) => {
+    setFocus((f) => (f?.type === 'weekday' && f.weekday === w ? null : { type: 'weekday', weekday: w }));
+    scrollToJournal();
+  }, [scrollToJournal]);
+  const onTag = useCallback((t: string) => {
+    setFocus((f) => (f?.type === 'tag' && f.tag === t ? null : { type: 'tag', tag: t }));
+    scrollToJournal();
+  }, [scrollToJournal]);
+  const logToday = useCallback(() => setLogDate(format(new Date(), 'yyyy-MM-dd')), []);
 
   const handleSignal = useCallback((a: SignalAction) => {
     switch (a.type) {
@@ -90,7 +128,7 @@ export function DashboardView({ entries, baseCapital, onAdd, onUpdate, onDelete,
       case 'weekday': setFocus({ type: 'weekday', weekday: a.weekday }); scrollToJournal(); break;
       case 'tag': setFocus({ type: 'tag', tag: a.tag }); scrollToJournal(); break;
     }
-  }, [openDay, drillTo]);
+  }, [openDay, drillTo, scrollToJournal]);
 
   // --- journal filtering ----------------------------------------------------
   const journalEntries = useMemo(() => {
@@ -108,13 +146,13 @@ export function DashboardView({ entries, baseCapital, onAdd, onUpdate, onDelete,
   // --- AI snapshot (same redaction pipeline as before) ------------------------
   const buildSnapshot = useCallback((insightType: InsightType) => redactSnapshot({
     insightType,
-    dateRange: { from: range?.from ?? new Date(0), to: range?.to ?? new Date() },
+    dateRange: { from: deferredRange?.from ?? new Date(0), to: deferredRange?.to ?? new Date() },
     dailyPnL: model.rangeEntries,
     stats: model.stats,
     drawdownSeries: model.days.map((d) => d.drawdownPct),
     currency: settings?.currency ?? 'INR',
     notes: model.rangeEntries.filter((e) => e.notes).map((e) => e.notes!),
-  }), [range, model, settings?.currency]);
+  }), [deferredRange, model, settings?.currency]);
 
   return (
     <>
@@ -131,77 +169,74 @@ export function DashboardView({ entries, baseCapital, onAdd, onUpdate, onDelete,
           <RangeBar range={range} onChange={setRange} trail={trail} onBack={drillBack} />
         </Reveal>
 
-        <Reveal className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <PulseHero days={model.days} stats={model.stats} previousStats={model.previousStats} rangeLabel={rangeLabel} health={model.health} />
+        {/* While a new range is computing, dim slightly instead of blocking */}
+        <div className={cn('flex flex-col gap-5 transition-opacity duration-fast', stale && 'opacity-70')} aria-busy={stale}>
+          <Reveal className="grid gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <PulseHeroM days={model.days} stats={model.stats} previousStats={model.previousStats} rangeLabel={rangeLabel} health={model.health} />
+            </div>
+            <SessionCardM days={model.days} onOpenDay={openDay} onLogToday={logToday} />
+          </Reveal>
+
+          <Reveal>
+            <MetricTilesM stats={model.stats} previousStats={model.previousStats} days={model.days} payoffRatio={model.payoffRatio} />
+          </Reveal>
+
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="flex min-w-0 flex-col gap-5">
+              <Reveal>
+                <EquityChartM
+                  days={model.days}
+                  allDays={model.allDays}
+                  allEntries={entries}
+                  range={deferredRange}
+                  onDayClick={openDay}
+                  onEmptyDayClick={openDay}
+                  onRangeDrill={drillTo}
+                />
+              </Reveal>
+
+              <Reveal>
+                <SignalsFeedM days={model.days} onAction={handleSignal} />
+              </Reveal>
+
+              <Reveal className="cv-auto">
+                <DeepDiveM
+                  days={model.days}
+                  startingEquity={model.startingEquity}
+                  activeWeekday={focus?.type === 'weekday' ? focus.weekday : null}
+                  activeTag={focus?.type === 'tag' ? focus.tag : null}
+                  onMonthDrill={drillTo}
+                  onRangeDrill={drillTo}
+                  onDay={openDay}
+                  onWeekday={onWeekday}
+                  onTag={onTag}
+                />
+              </Reveal>
+
+              <Reveal className="cv-auto">
+                <div ref={journalRef} className="scroll-mt-20 space-y-2">
+                  {focusLabel && (
+                    <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+                      <Filter className="h-3.5 w-3.5 text-primary" />
+                      <span>Journal filtered to <b>{focusLabel}</b> · {journalEntries.length} entries</span>
+                      <button onClick={() => setFocus(null)} className="pressable ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
+                        <X className="h-3 w-3" /> Clear
+                      </button>
+                    </div>
+                  )}
+                  <JournalM transactions={journalEntries} onDelete={onDelete} onEdit={setEditing} onUpdate={onUpdate} />
+                </div>
+              </Reveal>
+            </div>
+
+            <aside className="flex min-w-0 flex-col gap-5">
+              <Reveal><AIInsightsM buildSnapshot={buildSnapshot} /></Reveal>
+              <Reveal><SimulatorM days={model.days} allDays={model.allDays} /></Reveal>
+              <Reveal className="cv-auto"><CockpitM stats={model.stats} /></Reveal>
+              {renderFunds && <Reveal className="cv-auto">{renderFunds(deferredRange)}</Reveal>}
+            </aside>
           </div>
-          <SessionCard days={model.days} onOpenDay={openDay} onLogToday={() => setLogDate(format(new Date(), 'yyyy-MM-dd'))} />
-        </Reveal>
-
-        <Reveal>
-          <MetricTiles stats={model.stats} previousStats={model.previousStats} days={model.days} payoffRatio={model.payoffRatio} />
-        </Reveal>
-
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="flex min-w-0 flex-col gap-5">
-            <Reveal>
-              <EquityChart
-                days={model.days}
-                allDays={model.allDays}
-                allEntries={entries}
-                range={range}
-                onDayClick={openDay}
-                onEmptyDayClick={(key) => openDay(key)}
-                onRangeDrill={drillTo}
-              />
-            </Reveal>
-
-            <Reveal>
-              <SignalsFeed days={model.days} onAction={handleSignal} />
-            </Reveal>
-
-            <Reveal>
-              <DeepDive
-                days={model.days}
-                startingEquity={model.startingEquity}
-                activeWeekday={focus?.type === 'weekday' ? focus.weekday : null}
-                activeTag={focus?.type === 'tag' ? focus.tag : null}
-                onMonthDrill={drillTo}
-                onRangeDrill={drillTo}
-                onDay={openDay}
-                onWeekday={(w) => {
-                  setFocus((f) => (f?.type === 'weekday' && f.weekday === w ? null : { type: 'weekday', weekday: w }));
-                  scrollToJournal();
-                }}
-                onTag={(t) => {
-                  setFocus((f) => (f?.type === 'tag' && f.tag === t ? null : { type: 'tag', tag: t }));
-                  scrollToJournal();
-                }}
-              />
-            </Reveal>
-
-            <Reveal>
-              <div ref={journalRef} className="scroll-mt-20 space-y-2">
-                {focusLabel && (
-                  <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
-                    <Filter className="h-3.5 w-3.5 text-primary" />
-                    <span>Journal filtered to <b>{focusLabel}</b> · {journalEntries.length} entries</span>
-                    <button onClick={() => setFocus(null)} className="ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
-                      <X className="h-3 w-3" /> Clear
-                    </button>
-                  </div>
-                )}
-                <TraderTransactionTable transactions={journalEntries} onDelete={onDelete} onEdit={setEditing} onUpdate={onUpdate} />
-              </div>
-            </Reveal>
-          </div>
-
-          <aside className="flex min-w-0 flex-col gap-5">
-            <Reveal><AIInsightsSection buildSnapshot={buildSnapshot} /></Reveal>
-            <Reveal><StopLossSimulator days={model.days} allDays={model.allDays} /></Reveal>
-            <Reveal><TraderCockpit stats={model.stats} /></Reveal>
-            {renderFunds && <Reveal>{renderFunds(range)}</Reveal>}
-          </aside>
         </div>
       </Stagger>
 

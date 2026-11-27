@@ -28,6 +28,23 @@ against the previous period.
 - **Stop-loss simulator** – replays real sessions with a hard daily loss limit
   (defaults to your median losing day).
 
+### 🎨 Design system
+
+All colours, depth and motion come from tokens in `src/app/globals.css` — components
+never hard-code palette values, and every surface works in light and dark.
+
+- **Elevation:** `surface` (cards) → `surface-raised` (menus, dialogs, sheets) and
+  `well` (recessed inputs, stat chips). Shadows are theme-aware (`shadow-elev-1/2/3`,
+  `shadow-inset`) with a faint top highlight in dark mode.
+- **Calm palette:** off-white / charcoal surfaces (no pure white or black), muted
+  semantic colours (`positive`, `negative`, `warning`, `info`, `brand`).
+- **Responsiveness:** no backdrop blurs, no `transition-all`, entrance animations use
+  opacity/transform only, range changes and chart/tab switches run as React
+  transitions, panels are memoised, and theme switches suppress transitions for a
+  single frame. Motion is disabled under `prefers-reduced-motion`.
+- **Loading:** a layout-matched skeleton on first load and a non-blocking top
+  progress bar for syncs (the UI stays interactive).
+
 **Drill-down:** click any chart point to open that session; click a week, month,
 drawdown episode or streak to zoom the whole dashboard into it (with breadcrumbs and
 Back). Click a weekday or tag to filter the journal.

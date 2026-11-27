@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis,
@@ -36,6 +36,7 @@ const axisTick = { fill: 'hsl(var(--muted-foreground))', fontSize: 11 }; // esli
 
 export function DeepDive(props: DeepDiveProps) {
   const [tab, setTab] = useState<DiveTab>('months');
+  const [isPending, startTransition] = useTransition();
   const reduce = useReducedMotion();
 
   return (
@@ -50,7 +51,7 @@ export function DeepDive(props: DeepDiveProps) {
           compact
           className="max-w-full overflow-x-auto"
           value={tab}
-          onValueChange={(v) => setTab(v as DiveTab)}
+          onValueChange={(v) => startTransition(() => setTab(v as DiveTab))}
           items={[
             { id: 'months', label: 'Months', icon: CalendarRange },
             { id: 'weekdays', label: 'Weekdays', icon: ChartColumn },
@@ -60,14 +61,13 @@ export function DeepDive(props: DeepDiveProps) {
           ]}
         />
       </div>
-      <div className="px-4 pb-5 sm:px-5">
-        <AnimatePresence mode="wait" initial={false}>
+      <div className={cn('px-4 pb-5 transition-opacity duration-fast sm:px-5', isPending && 'opacity-60')}>
+        <AnimatePresence initial={false}>
           <motion.div
             key={tab}
-            initial={reduce ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0, y: -8 }}
-            transition={{ duration: 0.22 }}
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.16 }}
           >
             {props.days.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">No sessions in this range.</p>
@@ -172,7 +172,7 @@ function Weekdays({ days, activeWeekday, onWeekday }: DeepDiveProps) {
                 if (!active || !payload?.length) return null;
                 const w = payload[0].payload;
                 return (
-                  <div className="rounded-xl border border-border bg-popover/95 p-3 text-xs shadow-xl">
+                  <div className="chart-tooltip">
                     <p className="mb-1 font-semibold">{w.label} · {w.count} sessions</p>
                     <p>Avg <span className={toneClass(w.average)}>{money.signedFull(w.average)}</span></p>
                     <p>Total <span className={toneClass(w.total)}>{money.signedFull(w.total)}</span></p>
@@ -181,7 +181,7 @@ function Weekdays({ days, activeWeekday, onWeekday }: DeepDiveProps) {
                 );
               }}
             />
-            <Bar dataKey="average" radius={[4, 4, 4, 4]} maxBarSize={44} isAnimationActive={!reduce} animationDuration={700}>
+            <Bar dataKey="average" radius={[4, 4, 4, 4]} maxBarSize={44} isAnimationActive={!reduce} animationDuration={400}>
               {ordered.map((w) => (
                 <Cell
                   key={w.weekday}
@@ -201,7 +201,7 @@ function Weekdays({ days, activeWeekday, onWeekday }: DeepDiveProps) {
               disabled={w.count === 0}
               className={cn(
                 'flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40',
-                activeWeekday === w.weekday ? 'border-primary/60 bg-primary/5' : 'border-border/70 hover:bg-accent/50',
+                activeWeekday === w.weekday ? 'border-primary/60 bg-primary/5' : 'border-border bg-card shadow-elev-1 hover:bg-accent/40',
               )}
             >
               <span className="w-8 font-semibold">{w.label}</span>
@@ -246,7 +246,7 @@ function Distribution({ days }: DeepDiveProps) {
                 if (!active || !payload?.length) return null;
                 const b = payload[0].payload;
                 return (
-                  <div className="rounded-xl border border-border bg-popover/95 p-3 text-xs shadow-xl">
+                  <div className="chart-tooltip">
                     <p className="font-semibold">{money.short(b.from)} to {money.short(b.to)}</p>
                     <p className="text-muted-foreground">{b.count} sessions ({((b.count / Math.max(1, values.length)) * 100).toFixed(0)}%)</p>
                   </div>
@@ -254,7 +254,7 @@ function Distribution({ days }: DeepDiveProps) {
               }}
             />
             {data.length > 0 && <ReferenceLine x={binOf(s.mean)} stroke="hsl(var(--brand))" strokeDasharray="4 4" label={{ value: 'mean', position: 'top', fill: 'hsl(var(--brand))', fontSize: 10 }} />} {/* eslint-disable-line no-restricted-syntax -- chart label styling */}
-            <Bar dataKey="count" radius={[3, 3, 0, 0]} isAnimationActive={!reduce} animationDuration={700}>
+            <Bar dataKey="count" radius={[3, 3, 0, 0]} isAnimationActive={!reduce} animationDuration={400}>
               {data.map((b, i) => <Cell key={i} fill={b.tone === 'loss' ? 'hsl(var(--negative))' : 'hsl(var(--positive))'} fillOpacity={0.85} />)}
             </Bar>
           </BarChart>
@@ -298,7 +298,7 @@ function Drawdowns({ days, startingEquity, onRangeDrill }: DeepDiveProps) {
           <li key={e.start + e.trough}>
             <button
               onClick={() => onRangeDrill(parseISO(e.start), parseISO(e.recovery ?? days[days.length - 1].key))}
-              className="grid w-full grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5 rounded-xl border border-border/70 px-3 py-2.5 text-left text-xs outline-none transition-colors hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[150px_1fr_auto_auto]"
+              className="grid w-full grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5 rounded-xl border border-border bg-card px-3 py-2.5 text-left text-xs shadow-elev-1 outline-none transition-colors duration-fast hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[150px_1fr_auto_auto]"
             >
               <span className="font-medium">
                 {format(parseISO(e.start), 'MMM d')} → {e.recovery ? format(parseISO(e.recovery), 'MMM d, yy') : <span className="text-warning">ongoing</span>}
@@ -346,7 +346,7 @@ function Behavior({ days, activeTag, onTag, onRangeDrill }: DeepDiveProps) {
                   onClick={() => onTag(t.id)}
                   className={cn(
                     'grid w-full grid-cols-[minmax(116px,auto)_1fr_64px] items-center gap-3 rounded-xl border px-3 py-2 text-left text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
-                    activeTag === t.id ? 'border-primary/60 bg-primary/5' : 'border-border/70 hover:bg-accent/50',
+                    activeTag === t.id ? 'border-primary/60 bg-primary/5' : 'border-border bg-card shadow-elev-1 hover:bg-accent/40',
                   )}
                 >
                   <span className="font-medium">{t.label} <span className="text-muted-foreground">×{t.count}</span></span>
@@ -407,7 +407,7 @@ function Behavior({ days, activeTag, onTag, onRangeDrill }: DeepDiveProps) {
 
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: number }) {
   return (
-    <div className="rounded-xl bg-muted/50 px-3 py-2">
+    <div className="well px-3 py-2">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className={cn('text-sm font-semibold tabular-nums', tone === undefined ? '' : toneClass(tone))}>{value}</p>
       {sub && <p className="truncate text-[10px] text-muted-foreground">{sub}</p>}

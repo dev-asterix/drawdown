@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import {
   Area, AreaChart, Bar, BarChart, Brush, CartesianGrid, Cell, ComposedChart, Line, ReferenceDot,
   ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis,
@@ -111,7 +111,7 @@ function RichTooltip({ active, payload, mode, money, aggregation, rUnit, equityM
     ? format(p.from, 'EEE, MMM d, yyyy')
     : aggregation === 'weekly' ? `Week of ${format(p.from, 'MMM d, yyyy')}` : format(p.from, 'MMMM yyyy');
   return (
-    <div className="min-w-[190px] rounded-xl border border-border bg-popover/95 p-3 text-xs shadow-xl backdrop-blur" role="tooltip">
+    <div className="min-w-[190px] chart-tooltip" role="tooltip">
       <p className="mb-2 font-medium text-muted-foreground">{dateLabel}{aggregation !== 'daily' && ` · ${p.sessions} sessions`}</p>
       <div className="space-y-1">
         <Row label={aggregation === 'daily' ? 'Session P&L' : 'Period P&L'} value={money.signedFull(p.pnl)} tone={p.pnl} />
@@ -153,6 +153,9 @@ export function EquityChart({ days, allDays, allEntries, range, className, onDay
   const [aggregation, setAggregation] = useLocalStorage<Aggregation>('equity-aggregation-period', 'daily');
   const [calendarMode, setCalendarMode] = useLocalStorage<'month' | 'year'>('calendar-mode', 'month');
   const [hoverKey, setHoverKey] = useState<string | null>(null);
+  // Controls flip instantly; the (heavier) chart re-render follows as a transition
+  const [isPending, startTransition] = useTransition();
+  const later = <T,>(fn: (v: T) => void) => (v: T) => startTransition(() => fn(v));
 
   const type: ChartType = (TABS.some((t) => t.id === chartType) ? chartType : 'equity') as ChartType;
   const points = useMemo(() => aggregate(days, aggregation), [days, aggregation]);
@@ -201,7 +204,7 @@ export function EquityChart({ days, allDays, allEntries, range, className, onDay
 
   const tickFmt = (v: number) => (equityViewMode === 'r-multiple' && type === 'equity' ? `${v.toFixed(0)}R` : money.short(v));
   const tooltip = <RechartsTooltip content={<RichTooltip mode={type} money={money} aggregation={aggregation} rUnit={rUnit} equityMode={equityViewMode} />} cursor={{ stroke: 'hsl(var(--brand))', strokeOpacity: 0.35, strokeDasharray: '3 3' }} />;
-  const anim = { isAnimationActive: !reduce, animationDuration: 700, animationEasing: 'ease-out' as const };
+  const anim = { isAnimationActive: !reduce, animationDuration: 420, animationEasing: 'ease-out' as const };
   const empty = days.length === 0;
 
   return (
@@ -212,7 +215,7 @@ export function EquityChart({ days, allDays, allEntries, range, className, onDay
             <h3 className="text-base font-semibold tracking-tight">{TITLES[type].title}</h3>
             <p className="text-xs text-muted-foreground">{TITLES[type].sub}</p>
           </div>
-          <CustomTabs items={TABS} value={type} onValueChange={(v) => setChartType(v as ChartType)} size="sm" compact className="max-w-full overflow-x-auto" />
+          <CustomTabs items={TABS} value={type} onValueChange={later((v: string) => setChartType(v as ChartType))} size="sm" compact className="max-w-full overflow-x-auto" />
         </div>
 
         <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Chart view controls">
@@ -221,20 +224,20 @@ export function EquityChart({ days, allDays, allEntries, range, className, onDay
               size="sm"
               items={[{ id: 'daily', label: 'Daily' }, { id: 'weekly', label: 'Weekly' }, { id: 'monthly', label: 'Monthly' }]}
               value={aggregation}
-              onValueChange={(v) => setAggregation(v as Aggregation)}
+              onValueChange={later((v: string) => setAggregation(v as Aggregation))}
             />
           )}
           {type === 'equity' && (
             <>
-              <CustomTabs size="sm" items={[{ id: 'absolute', label: 'Absolute' }, { id: 'r-multiple', label: 'R-Multiple' }]} value={equityViewMode} onValueChange={(v) => setEquityViewMode(v as EquityViewMode)} />
+              <CustomTabs size="sm" items={[{ id: 'absolute', label: 'Absolute' }, { id: 'r-multiple', label: 'R-Multiple' }]} value={equityViewMode} onValueChange={later((v: string) => setEquityViewMode(v as EquityViewMode))} />
               <Toggle active={showDrawdown} onClick={() => setShowDrawdown(!showDrawdown)} label="Drawdown" icon={<TrendingDown className="h-3 w-3" />} />
             </>
           )}
           {type === 'pnl' && (
-            <CustomTabs size="sm" items={[{ id: 'raw', label: 'Raw' }, { id: 'clipped', label: 'Clipped' }, { id: 'log', label: 'Log' }]} value={pnlViewMode} onValueChange={(v) => setPnlViewMode(v as PnLViewMode)} />
+            <CustomTabs size="sm" items={[{ id: 'raw', label: 'Raw' }, { id: 'clipped', label: 'Clipped' }, { id: 'log', label: 'Log' }]} value={pnlViewMode} onValueChange={later((v: string) => setPnlViewMode(v as PnLViewMode))} />
           )}
           {type === 'activity' && (
-            <CustomTabs size="sm" items={[{ id: 'month', label: 'Month' }, { id: 'year', label: '12 months' }]} value={calendarMode} onValueChange={(v) => setCalendarMode(v as 'month' | 'year')} />
+            <CustomTabs size="sm" items={[{ id: 'month', label: 'Month' }, { id: 'year', label: '12 months' }]} value={calendarMode} onValueChange={later((v: string) => setCalendarMode(v as 'month' | 'year'))} />
           )}
           {type === 'equity' && equityViewMode === 'r-multiple' && (
             <span className="text-[11px] text-muted-foreground">1R = avg losing session ({money.short(rUnit)})</span>
@@ -242,14 +245,13 @@ export function EquityChart({ days, allDays, allEntries, range, className, onDay
         </div>
       </div>
 
-      <div className="px-1 pb-3 sm:px-3">
-        <AnimatePresence mode="wait" initial={false}>
+      <div className={cn('px-1 pb-3 transition-opacity duration-fast sm:px-3', isPending && 'opacity-60')}>
+        <AnimatePresence initial={false}>
           <motion.div
             key={`${type}-${type === 'activity' ? calendarMode : aggregation}`}
-            initial={reduce ? false : { opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0, y: -6 }}
-            transition={{ duration: 0.25 }}
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.16 }}
             className={cn('w-full', type === 'activity' ? 'min-h-[320px] px-2 sm:px-1' : 'h-[260px] sm:h-[320px] lg:h-[360px]')}
           >
             {empty && type !== 'activity' ? (
@@ -407,7 +409,7 @@ function Toggle({ active, onClick, label, icon }: { active: boolean; onClick: ()
       onClick={onClick}
       className={cn(
         'inline-flex h-[30px] items-center gap-1.5 rounded-xl border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        active ? 'border-negative/40 bg-negative/10 text-negative' : 'border-border/80 bg-muted/60 text-muted-foreground hover:text-foreground',
+        active ? 'border-negative/40 bg-negative/10 text-negative' : 'border-border bg-card text-muted-foreground hover:text-foreground',
       )}
     >
       {icon}

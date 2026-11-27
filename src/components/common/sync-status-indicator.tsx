@@ -32,9 +32,9 @@ export function SyncStatusIndicator() {
 
   return (
     <div className={cn(
-      "fixed bottom-4 right-4 px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm",
-      "backdrop-blur-xl border transition-all duration-300",
-      syncStatus === 'syncing' && "bg-blue-50/90 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300",
+      "fixed bottom-4 right-4 px-3 py-2 rounded-lg shadow-elev-2 flex items-center gap-2 text-sm",
+      " border transition duration-base",
+      syncStatus === 'syncing' && "bg-primary/90 border-primary/30 text-primary",
       syncStatus === 'synced' && "bg-positive/10 border-positive/30 text-positive",
       syncStatus === 'error' && "bg-negative/10 border-negative/30 text-negative"
     )}>

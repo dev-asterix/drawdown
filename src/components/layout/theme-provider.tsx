@@ -39,8 +39,15 @@ export function resolveTheme(value: ThemeValue, prefersDark: boolean): ResolvedT
  */
 function applyThemeClass(resolved: ResolvedTheme): void {
   const root = document.documentElement;
+  const other = resolved === 'dark' ? 'light' : 'dark';
+  if (root.classList.contains(resolved) && !root.classList.contains(other)) return;
+  // Suppress colour transitions for the swap so hundreds of elements don't
+  // animate at once (keeps theme switching instant).
+  root.classList.add('theme-switching');
   root.classList.remove('light', 'dark');
   root.classList.add(resolved);
+  void root.offsetHeight; // flush styles before re-enabling transitions
+  requestAnimationFrame(() => root.classList.remove('theme-switching'));
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

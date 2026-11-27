@@ -32,7 +32,7 @@ export function CustomTabs({ items, value, onValueChange, className, size = "md"
     <div
       role="tablist"
       className={cn(
-        "relative flex w-fit items-center gap-0.5 rounded-xl border border-border/80 bg-muted/60 p-1",
+        "relative flex w-fit items-center gap-0.5 rounded-xl bg-sunken p-1 shadow-inset",
         className
       )}
     >
@@ -47,7 +47,7 @@ export function CustomTabs({ items, value, onValueChange, className, size = "md"
             aria-selected={active}
             onClick={() => onValueChange(item.id)}
             className={cn(
-              "relative flex items-center gap-1.5 rounded-lg font-medium outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring",
+              "relative flex select-none items-center gap-1.5 rounded-lg font-medium outline-none transition-colors duration-fast focus-visible:ring-2 focus-visible:ring-ring/60",
               size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
               active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
@@ -55,8 +55,8 @@ export function CustomTabs({ items, value, onValueChange, className, size = "md"
             {active && (
               <motion.span
                 layoutId={`tab-indicator-${id}`}
-                className="absolute inset-0 rounded-lg bg-card shadow-sm ring-1 ring-border/80"
-                transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
+                className="absolute inset-0 rounded-lg bg-card shadow-elev-1 ring-1 ring-border/60"
+                transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 700, damping: 45, mass: 0.6 }}
               />
             )}
             {Icon && <Icon className="relative h-3.5 w-3.5" />}

@@ -62,7 +62,7 @@ function MobileNav({ variant, size, className }: MobileNavProps) {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-72 p-0 duration-300 motion-reduce:duration-0 motion-reduce:transition-none"
+        className="w-72 p-0 duration-base motion-reduce:duration-0 motion-reduce:transition-none"
       >
         <SheetHeader className="border-b px-6 py-4">
           <SheetTitle className="text-left">Navigation</SheetTitle>

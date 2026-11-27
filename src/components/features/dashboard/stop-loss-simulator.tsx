@@ -98,7 +98,7 @@ export function StopLossSimulator({ days, allDays }: StopLossSimulatorProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-muted/50 px-3 py-2">
+          <div className="well px-3 py-2">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Actual</p>
             <p className={cn('text-sm font-semibold tabular-nums', toneClass(result.actualTotal))}>{money.signed(result.actualTotal)}</p>
           </div>
@@ -118,7 +118,7 @@ export function StopLossSimulator({ days, allDays }: StopLossSimulatorProps) {
                     if (!active || !payload?.length) return null;
                     const p = payload[0].payload;
                     return (
-                      <div className="rounded-lg border border-border bg-popover/95 px-2 py-1.5 text-[11px] shadow-lg">
+                      <div className="chart-tooltip">
                         <p className="text-muted-foreground">{p.key}</p>
                         <p>Actual {money.signed(p.actual)}</p>
                         <p className="text-primary">With stop {money.signed(p.simulated)}</p>

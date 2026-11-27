@@ -19,7 +19,7 @@ export function LoginButton({
             className="w-full"
         >
             <Button className={className} variant="outline" type="submit">
-                <span className="absolute left-4 transition-transform duration-300 group-hover/btn:scale-110">
+                <span className="absolute left-4 transition-transform duration-base group-hover/btn:scale-110">
                     {icon === 'google' && (
                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -37,7 +37,7 @@ export function LoginButton({
                         </svg>
                     )}
                 </span>
-                <span className="flex-1 text-center font-medium tracking-wide transition-all duration-300">
+                <span className="flex-1 text-center font-medium tracking-wide transition duration-base">
                     {label}
                 </span>
             </Button>

@@ -87,15 +87,15 @@ export function SessionCard({ days, onOpenDay, onLogToday }: SessionCardProps) {
       </button>
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-lg bg-muted/60 px-2 py-1.5">
+        <div className="well px-2 py-1.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Rank</p>
           <p className="text-sm font-semibold">#{context.rank}<span className="text-xs font-normal text-muted-foreground">/{days.length}</span></p>
         </div>
-        <div className="rounded-lg bg-muted/60 px-2 py-1.5">
+        <div className="well px-2 py-1.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Percentile</p>
           <p className="text-sm font-semibold">P{Math.round(context.percentile)}</p>
         </div>
-        <div className="rounded-lg bg-muted/60 px-2 py-1.5">
+        <div className="well px-2 py-1.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">vs avg</p>
           <p className={cn('text-sm font-semibold', toneClass(context.vsMean))}>{money.signed(context.vsMean)}</p>
         </div>
@@ -128,7 +128,7 @@ export function SessionCard({ days, onOpenDay, onLogToday }: SessionCardProps) {
                   style={{ originY: d.pnl >= 0 ? 1 : 0, translateY: d.pnl >= 0 ? -h / 2 : h / 2 }}
                   initial={{ height: reduce ? h : 0 }}
                   animate={{ height: h }}
-                  transition={{ delay: reduce ? 0 : i * 0.02, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ delay: reduce ? 0 : i * 0.008, duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
                 />
               </button>
             );
